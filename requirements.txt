@@ -1,0 +1,10 @@
+marimo==0.9.30
+polars==1.12.0
+plotly==5.10.0
+missingno==0.5.2
+sqlite3==2.6.0
+numpy==1.23.3
+scikit-learn==1.5.2
+scipy==1.9.1
+kaleido==0.2.1
+pandas==1.4.0
