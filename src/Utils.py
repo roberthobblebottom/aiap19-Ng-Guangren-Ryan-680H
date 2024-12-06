@@ -4,7 +4,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 def connect_sqlite(db_path: str) -> pl.DataFrame:
-    """_summary_
+    """Connects to sqlite3 database and return a polars DataFrame
 
     Args:
         db_path (str): path to sqlite database
@@ -13,7 +13,7 @@ def connect_sqlite(db_path: str) -> pl.DataFrame:
         Exception: Exception risen when empty sqlite path given.
 
     Returns:
-        pl.DataFrame: Database in pl.DataFrame format
+        pl.DataFrame: dataframe object
     """
     if db_path == "":
         raise Exception("Empty sqlite path given")
@@ -25,7 +25,7 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
     """Removes outliers as explored in eda.ipynb"""
 
     def __init__(self, include_temperature=False):
-        """_summary_
+        """
 
         Args:
             include_temperature (bool, optional): If outilier should includes temperature,
@@ -75,25 +75,23 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
             else X
         ).to_pandas()
 
-        # print(X.columns)
         return X
 
 
 class NonImportantFeaturesRemover(ClassifierMixin, BaseEstimator):
+    """Removes non important feaetures as mentioned in th eda"""
+
     def __init__(
         self,
         features_to_remove: list[str],
-        # schema: list,
     ):
         self.features_to_remove = features_to_remove
-        # self.schema = schema
 
     def fit(self, x, y):
         return self
 
     def transform(self, x):
-        # print(self.schema)
-        # print(x)
+        """main function in  removing non important features"""
         x = pl.from_pandas(x)
         x = x.select(pl.exclude(*self.features_to_remove)).to_pandas()
         return x
