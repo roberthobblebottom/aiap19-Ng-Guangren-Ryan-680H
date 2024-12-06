@@ -775,6 +775,12 @@ def __(feature_importance_regression):
 
 
 @app.cell
+def __(mo):
+    mo.md("""## these features below will be manually removed in the ml pipeline""")
+    return
+
+
+@app.cell
 def __(feature_importance_regression):
     print(
         "Less important features for classification: \n",
@@ -831,6 +837,12 @@ def __(feature_importance_classification):
             :15, "name"
         ].to_list(),
     )
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md("""## these features below will be manually removed in the ml pipeline""")
     return
 
 

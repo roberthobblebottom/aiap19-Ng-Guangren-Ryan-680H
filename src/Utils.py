@@ -79,13 +79,21 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
         return X
 
 
-class nonImportantFeaturesRemover(ClassifierMixin, BaseEstimator):
-    def __init__(self, features_to_remove: list[str]):
+class NonImportantFeaturesRemover(ClassifierMixin, BaseEstimator):
+    def __init__(
+        self,
+        features_to_remove: list[str],
+        # schema: list,
+    ):
         self.features_to_remove = features_to_remove
+        # self.schema = schema
 
     def fit(self, x, y):
         return self
 
-    def transform(self, x: pl.DataFrame):
-        x = pl.from_numpy(x).select(pl.exclude(self.features_to_remove)).to_pandas()
+    def transform(self, x):
+        # print(self.schema)
+        # print(x)
+        x = pl.from_pandas(x)
+        x = x.select(pl.exclude(*self.features_to_remove)).to_pandas()
         return x

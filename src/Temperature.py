@@ -80,11 +80,11 @@ class Temperature:
                     "plant_type",
                     "plant_stage",
                 ).str.to_lowercase(),
-                pl.when(pl.col("previous_cycle_plant_type") == pl.col("plant_type"))
-                .then(pl.lit(0))
-                .otherwise(pl.lit(1))
-                .alias("plant_type_changed")
-                .cast(pl.Int8),
+                # pl.when(pl.col("previous_cycle_plant_type") == pl.col("plant_type"))
+                # .then(pl.lit(0))
+                # .otherwise(pl.lit(1))
+                # .alias("plant_type_changed")
+                # .cast(pl.Int8),
             )
             .with_columns(
                 plant_stage_coded=(
@@ -118,8 +118,8 @@ class Temperature:
                     "oneHotEncoder",
                     OneHotEncoder(),
                     [
-                        "location",
-                        "previous_cycle_plant_type",
+                        # "location",
+                        # "previous_cycle_plant_type",
                         "plant_type",
                         "plant_stage",
                         "plant_type_stage",
@@ -140,33 +140,29 @@ class Temperature:
                         "nutrient_k_ppm",
                         "ph",
                         "water_level_mm",
-                        "plant_type_changed",
-                        "plant_stage_coded",
+                        # "plant_type_changed",
+                        # "plant_stage_coded",
                     ],
                 ),
             ]
         )
         nonImportantFeatures = [
             [
-                "light_intensity_lux",
-                "co2_ppm",
-                "ec_dsm",
-                "nutrient_k_ppm",
-                "nutrient_n_ppm",
-                "water_level_mm",
-                "nutrient_p_ppm",
-                "humidity_percent",
-                "ph",
-                "o2_ppm",
-                "plant_type_leafy greens",
-                "location_zone_d",
-                "previous_cycle_plant_type_herbs",
-                "location_zone_f",
-                "location_zone_a",
+                "plant_stage_coded",
+                "previous_cycle_plant_type",
+                "location",
+                # "plant_type", # removed from here because it is still needed
             ]
         ]
         self.pipeline = Pipeline(
             [
+                (
+                    "nonImportantFeaturesRemover",
+                    Utils.NonImportantFeaturesRemover(
+                        nonImportantFeatures,
+                        # list(self.x.columns)
+                    ),
+                ),
                 ("outliersRemover", Utils.OutliersRemover()),
                 ("columnTransformerForOneHotEncoding", column_transformer),
                 (
@@ -175,10 +171,6 @@ class Temperature:
                 ),  # MissForest was not working because it kept detecting temperature
                 # even though I removed it from features.
                 # replaced with Simpleimputer for speed and availability
-                (
-                    "nonImportantFeaturesRemover",
-                    Utils.nonImportantFeaturesRemover(nonImportantFeatures),
-                ),
                 ("randomForestRegressor", RandomForestRegressor()),
             ]
         )
@@ -187,19 +179,17 @@ class Temperature:
         x_train, x_test, y_train, y_test = train_test_split(
             self.x, self.y, test_size=0.1
         )
-        # print(x_train.columns)
 
-        # print(y_train.columns)
-        self.pipeline.fit(x_train, y_train)
         # # Hyperparam tuning with 5 fold LOOCV
-        # for x_indices, y_indices in self.kFold.split(x_train, x_test):
+        for x_indices, y_indices in self.kFold.split(x_train, x_test):
 
-        #     self.pipeline.train()
+            self.pipeline.fit(x_train, y_train)
+            self.pipeline.train()
 
     def evaluate(self):
         pass
 
 
 if __name__ == "__main__":
-    db = Utils.connect_sqlite("../agri.db")
+    db = Utils.connect_sqlite("agri.db")
     Temperature(db).train()
