@@ -18,45 +18,48 @@ def __():
     import missingno
     import sqlite3
     import numpy as np
+    from missforest import MissForest
+
     from sklearn.model_selection import train_test_split
     from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
     from sklearn.tree import DecisionTreeRegressor
-    from missforest import MissForest
-
-    from sklearn.preprocessing import OneHotEncoder
+    from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures
     from sklearn.feature_selection import SelectKBest
+
+    from scipy.stats import shapiro, levene, bartlett, ttest_1samp
+    from scipy.stats.contingency import association
+
+
+    import statsmodels.formula.api as smf
+    import statsmodels.api as sm
+    import os
+
+    if not os.path.exists("images"):
+        os.mkdir("images")
     return (
         DecisionTreeRegressor,
         MissForest,
         OneHotEncoder,
+        PolynomialFeatures,
         RandomForestClassifier,
         RandomForestRegressor,
         SelectKBest,
+        association,
+        bartlett,
+        levene,
         missingno,
         mo,
         np,
+        os,
         pl,
         px,
+        shapiro,
+        sm,
+        smf,
         sqlite3,
         train_test_split,
+        ttest_1samp,
     )
-
-
-@app.cell
-def __():
-    import kaleido
-    kaleido.__version__
-    return (kaleido,)
-
-
-@app.cell
-def __():
-    import os
-    import scipy
-
-    if not os.path.exists("images"):
-        os.mkdir("images")
-    return os, scipy
 
 
 @app.cell
@@ -318,9 +321,10 @@ def __(df_consistent, mo, os, px):
     if not os.path.exists("images/scatterplot_matrix.png"):
         print("here")
         px.scatter_matrix(
-            df_consistent.select(_names)
-            .to_pandas(),
-        ).update_layout(width=1000, height=1000).write_image("images/scatterplot_matrix.png")
+            df_consistent.select(_names).to_pandas(),
+        ).update_layout(width=1000, height=1000).write_image(
+            "images/scatterplot_matrix.png"
+        )
     mo.image("images/scatterplot_matrix.png")
     return
 
@@ -331,7 +335,7 @@ def __(mo):
         r"""
         ###Used this scatter plot matrix to check the overall patterns of features of interests to see what pair of features shold I investigated more closely via enlarged scatter plot with trendline and box plots
 
-        #### nutrient p and n seems to have correlations to nutrient k and light intensity lux, p and n nutrients may be redundant as shown in the scatter plots matrix above and the following scatter plots below.
+        #### nutrient p and n seems to have correlations to nutrient n and light intensity lux, p and k nutrients may be redundant as shown in the scatter plots matrix above and the following scatter plots below.
 
         ### the light_intensity_lux is very v shaped for the nutrients introduced and humidity as shown above and below.
 
@@ -381,7 +385,7 @@ def __(df_consistent, mo, os, px):
 def __(df_consistent, mo, os, px):
     if not os.path.exists("images/scatterplot_humidity_p.png"):
         px.scatter(
-            df_consistent.sample(fraction=0.3, shuffle=True).to_pandas(),
+            df_consistent.to_pandas(),
             x="humidity_percent",
             y="nutrient_k_ppm",
             trendline="lowess",
@@ -416,9 +420,8 @@ def __(df_consistent, mo, os, px):
 @app.cell
 def __(df_consistent, mo, os, px):
     if not os.path.exists("images/scatterplot_n_p.png"):
-
         px.scatter(
-            df_consistent.sample(fraction=0.3, shuffle=True).to_pandas(),
+            df_consistent.to_pandas(),
             x="nutrient_p_ppm",
             y="nutrient_n_ppm",
             trendline="lowess",
@@ -485,19 +488,17 @@ def __(df_consistent, mo, os, px):
 
 @app.cell
 def __(mo):
-    mo.md(r"""### lower levels of nutrients at seedling stage and very similar proportionality for all three nutrients. this supports the notion that n and p nutrients may be redundant.""")
+    mo.md(r"""### lower levels of nutrients at seedling stage and very similar proportionality for all three nutrients. this supports the notion that k and p nutrients may be redundant.""")
     return
 
 
 @app.cell
 def __(df_consistent, mo, os, px):
     if not os.path.exists("images/box_plant_type_temp.png"):
-
         px.box(
             df_consistent.to_pandas(),
             x="plant_type",
             y="temperature_celsius",
-
         ).update_layout(
             dragmode=False,  # Disable dragging
             hovermode=False,  # Disable hover info
@@ -521,7 +522,6 @@ def __(mo):
 @app.cell
 def __(df_consistent, mo, os, px):
     if not os.path.exists("images/box_plant_type_humidity.png"):
-
         px.box(
             df_consistent.to_pandas(),
             x="plant_type",
@@ -538,7 +538,6 @@ def __(df_consistent, mo, os, px):
 @app.cell
 def __(df_consistent, mo, os, px):
     if not os.path.exists("images/box_plant_type_lux.png"):
-
         px.box(
             df_consistent.to_pandas(),
             x="plant_type",
@@ -662,56 +661,56 @@ def __(df_consistent, px):
 
 @app.cell
 def __(mo):
-    mo.md(r"""# certain feature's outliers will be set to NAN, and they will be nan imputed later""")
+    mo.md(r"""<!-- # certain feature's outliers will be set to NAN, and they will be nan imputed later -->""")
     return
 
 
 @app.cell
-def __(df_consistent, pl):
-    df_less_outs = df_consistent.with_columns(
-        pl.when(pl.col("temperature_celsius") < 0)
-        .then(pl.lit(None))
-        .otherwise(pl.col("temperature_celsius"))
-        .alias("temperature_celsius"),
-        o2_ppm=pl.when(
-            pl.col("plant_type") == pl.lit("fruiting_vegetables"),
-            ~pl.col("o2_ppm").is_between(
-                5,
-                8,
-            ),
-        )
-        .then(pl.lit(None))
-        .when(
-            pl.col("plant_type") == pl.lit("herbs"),
-            ~pl.col("o2_ppm").is_between(5, 8),
-        )
-        .then(pl.lit(None))
-        .otherwise(pl.col("o2_ppm")),
-        light_intensity_lux=pl.when(pl.col("light_intensity_lux") < 0)
-        .then(pl.lit(None))
-        .otherwise(pl.col("light_intensity_lux")),
-        ec_dsm=pl.when(pl.col("ec_dsm") < 0)
-        .then(pl.lit(None))
-        .otherwise(pl.col("ec_dsm")),
-    )
-    return (df_less_outs,)
+def __():
+    # df_less_outs = df_consistent.with_columns(
+    #     pl.when(pl.col("temperature_celsius") < 0)
+    #     .then(pl.lit(None))
+    #     .otherwise(pl.col("temperature_celsius"))
+    #     .alias("temperature_celsius"),
+    #     o2_ppm=pl.when(
+    #         pl.col("plant_type") == pl.lit("fruiting_vegetables"),
+    #         ~pl.col("o2_ppm").is_between(
+    #             5,
+    #             8,
+    #         ),
+    #     )
+    #     .then(pl.lit(None))
+    #     .when(
+    #         pl.col("plant_type") == pl.lit("herbs"),
+    #         ~pl.col("o2_ppm").is_between(5, 8),
+    #     )
+    #     .then(pl.lit(None))
+    #     .otherwise(pl.col("o2_ppm")),
+    #     light_intensity_lux=pl.when(pl.col("light_intensity_lux") < 0)
+    #     .then(pl.lit(None))
+    #     .otherwise(pl.col("light_intensity_lux")),
+    #     ec_dsm=pl.when(pl.col("ec_dsm") < 0)
+    #     .then(pl.lit(None))
+    #     .otherwise(pl.col("ec_dsm")),
+    # )
+    return
 
 
 @app.cell
 def __(mo):
-    mo.md(r"""# Checking on NANs""")
+    mo.md(r"""<!-- # Checking on NANs -->""")
     return
 
 
 @app.cell
-def __(df_less_outs, missingno):
-    missingno.matrix(df_less_outs.to_pandas())
+def __(df_consistent, missingno):
+    missingno.matrix(df_consistent.to_pandas())
     return
 
 
 @app.cell
-def __(df_less_outs, missingno):
-    missingno.heatmap(df_less_outs.to_pandas())
+def __(df_consistent, missingno):
+    missingno.heatmap(df_consistent.to_pandas())
     return
 
 
@@ -739,23 +738,19 @@ def __(OneHotEncoder):
 
 
 @app.cell
-def __(RandomForestRegressor, df_less_outs, e, pl):
+def __(RandomForestRegressor, df_consistent, e, pl):
     rfr = RandomForestRegressor(n_jobs=20)
-    df_regression = df_less_outs.filter(
-        ~pl.col("temperature_celsius").is_nan()
-    )
+    df_regression = df_consistent.filter(~pl.col("temperature_celsius").is_nan())
     df_one_hot_encoded_regression = e.fit_transform(
         df_regression.select(pl.col(pl.String()))
-        .select(pl.exclude("plant_type_stage","plant_stage"))
+        .select(pl.exclude("plant_type_stage", "plant_stage"))
         .to_pandas()
     )
     _y = df_regression.select("temperature_celsius").to_series().to_pandas()
     df_regression = df_one_hot_encoded_regression.hstack(
         df_regression.select(pl.exclude(pl.String()))
     ).select(pl.exclude("temperature_celsius"))
-    rfr.fit(
-        df_regression,_y
-    )
+    rfr.fit(df_regression, _y)
     feature_importance_regression = pl.DataFrame(
         [rfr.feature_names_in_, rfr.feature_importances_],
         schema=["name", "importance"],
@@ -770,20 +765,22 @@ def __(RandomForestRegressor, df_less_outs, e, pl):
 
 @app.cell
 def __(feature_importance_regression):
-    print("More important features for classification: \n",
+    print(
+        "More important features for classification: \n",
         feature_importance_regression.sort("importance", descending=True)[
             :15, "name"
-        ].to_list()
+        ].to_list(),
     )
     return
 
 
 @app.cell
 def __(feature_importance_regression):
-    print("Less important features for classification: \n",
+    print(
+        "Less important features for classification: \n",
         feature_importance_regression.sort("importance", descending=True)[
             15:, "name"
-        ].to_list()
+        ].to_list(),
     )
     return
 
@@ -795,21 +792,25 @@ def __(mo):
 
 
 @app.cell
-def __(RandomForestClassifier, df_less_outs, e, pl):
+def __(df_consistent, pl):
+    print(df_consistent.select(pl.exclude(pl.String())).columns)
+    return
+
+
+@app.cell
+def __(RandomForestClassifier, df_consistent, e, pl):
     rfc = RandomForestClassifier(n_jobs=20)
-    df_classification = df_less_outs.sample(fraction=0.3, shuffle=True)
+    df_classification = df_consistent
     df_one_hot_encoded_classification = e.fit_transform(
         df_classification.select(pl.col(pl.String()))
-        .select(pl.exclude("plant_type_stage","plant_stage","plant_stage_coded"))
+        .select(pl.exclude("plant_type_stage", "plant_stage", "plant_stage_coded"))
         .to_pandas()
     )
     _y = df_classification.select("plant_type_stage").to_series().to_pandas()
-    df_classification = df_one_hot_encoded_classification.hstack(df_classification.select(pl.exclude(pl.String()))).select(
-        pl.exclude("plant_stage_coded")
-    )
-    rfc.fit(
-        df_classification,_y
-    )
+    df_classification = df_one_hot_encoded_classification.hstack(
+        df_classification.select(pl.exclude(pl.String()))
+    ).select(pl.exclude("plant_stage_coded"))
+    rfc.fit(df_classification, _y)
     feature_importance_classification = pl.DataFrame(
         [rfc.feature_names_in_, rfc.feature_importances_],
         schema=["name", "importance"],
@@ -824,20 +825,22 @@ def __(RandomForestClassifier, df_less_outs, e, pl):
 
 @app.cell
 def __(feature_importance_classification):
-    print("More important features for classification: \n",
+    print(
+        "More important features for classification: \n",
         feature_importance_classification.sort("importance", descending=True)[
             :15, "name"
-        ].to_list()
+        ].to_list(),
     )
     return
 
 
 @app.cell
 def __(feature_importance_classification):
-    print("Less important features for classification: \n",
+    print(
+        "Less important features for classification: \n",
         feature_importance_classification.sort("importance", descending=True)[
             15:, "name"
-        ].to_list()
+        ].to_list(),
     )
     return
 
@@ -857,12 +860,414 @@ def __(mo):
 
 @app.cell
 def __(mo):
-    mo.md(r"""# Hypothesis testing""")
+    mo.md(
+        r"""
+        # Hypothesis testing for classifcaiton against target
+
+        ## Test of normality
+        """
+    )
+    return
+
+
+@app.cell
+def __(MissForest, df_consistent, os, pl):
+    missForestImputer = MissForest(
+        max_iter=5
+    )  # max iter to 3 because 5 iters took too long. but it may be less accurate
+
+    if not os.path.exists("imputed_cache.csv") or True:
+        print("a")
+        df_imputed = missForestImputer.fit_transform(
+            df_consistent.select(pl.exclude(pl.String())).to_pandas()
+        )
+        df_imputed.to_csv("imputed_cache.csv", index=False)
+    else:
+        print("b")
+        df_imputed = pl.read_csv("imputed_cache.csv").to_pandas()
+    return df_imputed, missForestImputer
+
+
+@app.cell
+def __(df_consistent, pl, shapiro):
+    pl.DataFrame(
+        [
+            list(shapiro(df_consistent["nutrient_k_ppm"])),
+            list(shapiro(df_consistent["nutrient_p_ppm"])),
+            list(shapiro(df_consistent["nutrient_n_ppm"])),
+            list(shapiro(df_consistent["humidity_percent"])),
+            list(shapiro(df_consistent["light_intensity_lux"])),
+        ]
+    ).transpose(column_names=["statistic", "p value"]).hstack(
+        pl.DataFrame(
+            [
+                "nutrient_k_ppm",
+                "nutrient_p_ppm",
+                "nutrient_n_ppm",
+                "humidity_percent",
+                "light_intensity_lux",
+            ],
+            schema=["feature"],
+        )
+    ).select("feature", "statistic", "p value")
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""## Test of homogenity of variance""")
+    return
+
+
+@app.cell
+def __(bartlett, df_consistent, df_imputed, pl):
+    def bertlett_helper(feature_name, df_consistent):
+        l = []
+        for classi in df_consistent["plant_type_stage"].unique().to_list():
+            l.append(
+                df_consistent.filter(pl.col("plant_type_stage") == classi)[
+                    feature_name
+                ].to_list()
+            )
+        return l
+
+
+    _d = pl.from_pandas(df_imputed).hstack(
+        df_consistent.select("plant_type_stage")
+    )
+
+    pl.DataFrame(
+        (
+            list(bartlett(*bertlett_helper("nutrient_k_ppm", _d))),
+            list(bartlett(*bertlett_helper("nutrient_p_ppm", _d))),
+            list(bartlett(*bertlett_helper("nutrient_n_ppm", _d))),
+            list(bartlett(*bertlett_helper("humidity_percent", _d))),
+            list(bartlett(*bertlett_helper("light_intensity_lux", _d))),
+        )
+    ).transpose(column_names=["statistic", "p value"]).hstack(
+        pl.DataFrame(
+            [
+                "nutrient_k_ppm",
+                "nutrient_p_ppm",
+                "nutrient_n_ppm",
+                "humidity_percent",
+                "light_intensity_lux",
+            ],
+            schema=["feature"],
+        )
+    ).select("feature", "statistic", "p value")
+    return (bertlett_helper,)
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""normality and homogeneity of variance are held""")
+    return
+
+
+@app.cell
+def __(df_consistent, df_imputed, pl, ttest_1samp):
+    _d = pl.from_pandas(df_imputed).hstack(
+        df_consistent.select("plant_type_stage")
+    )
+
+    pl.DataFrame(
+        (
+            list(ttest_1samp(_d["nutrient_k_ppm"], _d["nutrient_k_ppm"].mean())),
+            list(ttest_1samp(_d["nutrient_p_ppm"], _d["nutrient_p_ppm"].mean())),
+            list(ttest_1samp(_d["nutrient_n_ppm"], _d["nutrient_n_ppm"].mean())),
+            list(
+                ttest_1samp(_d["humidity_percent"], _d["humidity_percent"].mean())
+            ),
+            list(
+                ttest_1samp(
+                    _d["light_intensity_lux"], _d["light_intensity_lux"].mean()
+                )
+            ),
+        )
+    ).transpose(column_names=["statistic", "p value"]).hstack(
+        pl.DataFrame(
+            [
+                "nutrient_k_ppm",
+                "nutrient_p_ppm",
+                "nutrient_n_ppm",
+                "humidity_percent",
+                "light_intensity_lux",
+            ],
+            schema=["feature"],
+        )
+    ).select("feature", "statistic", "p value")
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""##Effect Size (I failed in this one)""")
+    return
+
+
+@app.cell
+def __(association, df_imputed, pl):
+    _d = pl.from_pandas(df_imputed)
+    _d = _d.with_columns(pl.all().cast(pl.Int64))
+    pl.DataFrame(
+        (
+            list(
+                association(
+                    _d["nutrient_k_ppm"],
+                )
+            ),
+            list(
+                association(
+                    _d["nutrient_p_ppm"],
+                )
+            ),
+            list(
+                association(
+                    _d["nutrient_n_ppm"],
+                )
+            ),
+            list(
+                association(
+                    _d["humidity_percent"],
+                )
+            ),
+            list(
+                association(
+                    _d["light_intensity_lux"],
+                )
+            ),
+        )
+    ).transpose(column_names=["statistic", "p value"]).hstack(
+        pl.DataFrame(
+            [
+                "nutrient_k_ppm",
+                "nutrient_p_ppm",
+                "nutrient_n_ppm",
+                "humidity_percent",
+                "light_intensity_lux",
+            ],
+            schema=["feature"],
+        )
+    ).select("feature", "statistic", "p value")
     return
 
 
 @app.cell
 def __():
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""# Regression  hypothesis testing using OLS linear regression against target""")
+    return
+
+
+@app.cell
+def __(df_consistent, df_imputed, pl, sm):
+    _df = df_consistent.filter(~pl.col("temperature_celsius").is_nan())
+    _y = _df["temperature_celsius"].to_pandas()
+    _x = (
+        pl.from_pandas(df_imputed)
+        .hstack(
+            df_consistent.select("temperature_celsius").rename(
+                {"temperature_celsius": "temperature_celsius_2"}
+            )
+        )
+        .filter(pl.col("temperature_celsius_2").is_not_nan())
+        .drop(
+            "temperature_celsius_2",
+        )
+    ).to_pandas()
+    print(_x.columns)
+    model = sm.OLS(_y, _x).fit()
+    model.summary()
+    return (model,)
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        temperature_celsius	1.0000	1.44e-17	6.94e+16	0.000	1.000	1.000  
+        humidity_percent	-5.447e-16	1.92e-17	-28.384	0.000	-5.82e-16	-5.07e-16  
+        light_intensity_lux	-9.842e-17	6.05e-19	-162.747	0.000	-9.96e-17	-9.72e-17  
+        co2_ppm	2.374e-17	8.19e-19	28.995	0.000	2.21e-17	2.53e-17   
+        ec_dsm	-6.384e-16	2.66e-16	-2.396	0.017	-1.16e-15	-1.16e-16  
+        o2_ppm	1.921e-16	1e-16	1.919	0.055	-4.07e-18	3.88e-16  
+        nutrient_n_ppm	-1.392e-16	4.19e-18	-33.203	0.000	-1.47e-16	-1.31e-16  
+        nutrient_p_ppm	1.078e-15	1.15e-17	93.639	0.000	1.06e-15	1.1e-15  
+        nutrient_k_ppm	-2.559e-17	2.89e-18	-8.853	0.000	-3.13e-17	-1.99e-17  
+        ph	-1.11e-16	2.61e-16	-0.426	0.670	-6.22e-16	4e-16  
+        water_level_mm	3.123e-17	1.98e-17	1.576	0.115	-7.61e-18	7.01e-17  
+        plant_type_changed	-5.829e-16	2.8e-16	-2.078	0.038	-1.13e-15	-3.32e-17  
+        plant_stage_coded	9.048e-17	1.99e-16	0.455	0.649	-2.99e-16	4.8e-16  
+        """
+    )
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        # feature v feature hypothesis testing
+        ## nutrient n vs nutrient k
+        """
+    )
+    return
+
+
+@app.cell
+def __(df_imputed, pl, sm):
+    _model = sm.OLS(
+        pl.from_pandas(df_imputed).select("nutrient_n_ppm").to_pandas(),
+        df_imputed["nutrient_k_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""## nutrient n vs nutrient p""")
+    return
+
+
+@app.cell
+def __(df_imputed, pl, sm):
+    _model = sm.OLS(
+        pl.from_pandas(df_imputed).select("nutrient_n_ppm").to_pandas(),
+        df_imputed["nutrient_p_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""## nutrient p vs nutrient k""")
+    return
+
+
+@app.cell
+def __(df_imputed, pl, sm):
+    _model = sm.OLS(
+        pl.from_pandas(df_imputed).select("nutrient_p_ppm").to_pandas(),
+        df_imputed["nutrient_k_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md("""## nutrient n vs light intensity lux""")
+    return
+
+
+@app.cell
+def __(df_imputed, np, smf):
+    _df = df_imputed[["nutrient_n_ppm", "light_intensity_lux"]]
+    _df.columns = ["y", "x"]
+
+
+    def poly(x, degree):
+        return np.vander(x, degree + 1, increasing=True)[:, 1:]
+
+
+    results = smf.ols(formula="y ~ poly(x, 2)", data=_df).fit()
+    results.summary().tables[1]
+    return poly, results
+
+
+@app.cell
+def __(mo):
+    mo.md("""## nutrient p vs light intensity lux""")
+    return
+
+
+@app.cell
+def __(df_imputed, results, smf):
+    results
+    _df = df_imputed[["nutrient_p_ppm", "light_intensity_lux"]]
+    _df.columns = ["y", "x"]
+
+
+    _results = smf.ols(formula="y ~ poly(x, 2)", data=_df).fit()
+    _results.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md("""## nutrient k vs light intensity lux""")
+    return
+
+
+@app.cell
+def __(df_imputed, smf):
+    _df = df_imputed[["nutrient_k_ppm", "light_intensity_lux"]]
+    _df.columns = ["y", "x"]
+
+
+    _results = smf.ols(formula="y ~ poly(x, 2)", data=_df).fit()
+    _results.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""## plant_stage_coded v nutrient_k_ppm""")
+    return
+
+
+@app.cell
+def __(df_imputed, pl, sm):
+    _model = sm.OLS(
+        pl.from_pandas(df_imputed).select("plant_stage_coded").to_pandas(),
+        df_imputed["nutrient_k_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""## plant_stage_coded v nutrient_n_ppm""")
+    return
+
+
+@app.cell
+def __(df_imputed, pl, sm):
+    _model = sm.OLS(
+        pl.from_pandas(df_imputed).select("plant_stage_coded").to_pandas(),
+        df_imputed["nutrient_n_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""## plant_stage_coded v nutrient_p_ppm""")
+    return
+
+
+@app.cell
+def __(df_imputed, pl, sm):
+    _model = sm.OLS(
+        pl.from_pandas(df_imputed).select("plant_stage_coded").to_pandas(),
+        df_imputed["nutrient_p_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""## the nutrients are really significantly  related to eaach other and these other features like light intensity and plant_stage_coded. nutrients p and k can be removed as discussed in the visualisation sections""")
     return
 
 
