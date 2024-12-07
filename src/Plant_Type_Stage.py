@@ -2,23 +2,22 @@ import polars as pl
 
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, label_binarize
+
+
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.metrics import (
-    mean_absolute_error,
-    root_mean_squared_error,
-    r2_score,
-)
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 import Utils
 from scipy.stats import randint
+import pandas as pd
 
 
-class Temperature:
+class Plant_Type_Stage:
     def __init__(self, df: pl.DataFrame) -> None:
 
         df = Utils.column_rename_and_ensuring_consistency_values(df)
@@ -26,14 +25,9 @@ class Temperature:
         # Some guards to prevent incorrect inputs or formats from being trained and tested
         if df.shape[0] == 0:
             raise Exception("There are no rows in the input Polars DataFrame.")
-        df = df.filter(pl.col("temperature_celsius").is_not_nan())
-        if df.shape[0] == 0:
-            raise Exception(
-                "There are no rows with temperature column that are not NaN values."
-            )
 
-        self.x = df.select(pl.exclude("temperature_celsius")).to_pandas()
-        self.y = df.select("temperature_celsius").to_pandas()
+        self.x = df.select(pl.exclude("plant_type_stage")).to_pandas()
+        self.y = df.select("plant_type_stage").to_pandas()
 
         column_transformer = ColumnTransformer(
             [
@@ -43,13 +37,13 @@ class Temperature:
                     [
                         "plant_type",
                         "plant_stage",
-                        "plant_type_stage",
                     ],
                 ),
                 (
                     "passthrough",
                     "passthrough",
                     [
+                        "temperature_celsius",
                         "humidity_percent",
                         "light_intensity_lux",
                         "co2_ppm",
@@ -64,12 +58,12 @@ class Temperature:
         )
         nonImportantFeatures = [
             [
-                "nutrient_p_ppm",
-                "nutrient_k_ppm",  # these two nutrients are removed as discussed in the eda.
                 "plant_stage_coded",
                 "previous_cycle_plant_type",
                 "location",
-                # "plant_type", # removed from here because it is still needed
+                "nutrient_p_ppm",
+                "nutrient_k_ppm",  # these two nutrients are removed as discussed in the eda.
+                # "plant_type", # removed from here because it is still needed for outlier removal
             ]
         ]
         self.pipeline = Pipeline(
@@ -80,7 +74,7 @@ class Temperature:
                         nonImportantFeatures,
                     ),
                 ),
-                ("outliersRemover", Utils.OutliersRemover()),
+                ("outliersRemover", Utils.OutliersRemover(include_temperature=True)),
                 ("columnTransformerForOneHotEncoding", column_transformer),
                 (
                     "simpleImputer",
@@ -89,8 +83,8 @@ class Temperature:
                 # even though I removed it from features.
                 # replaced with Simpleimputer for speed and availability
                 (
-                    "randomForestRegressor",
-                    RandomForestRegressor(
+                    "randomForestClassifier",
+                    RandomForestClassifier(
                         n_jobs=10,
                         random_state=0,
                     ),
@@ -121,17 +115,17 @@ class Temperature:
         """
         print("hyperparameter tuning")
         param_dist = {
-            "randomForestRegressor__n_estimators": randint(10, 200),
-            "randomForestRegressor__max_depth": randint(1, 20),
-            "randomForestRegressor__min_samples_split": randint(2, 11),
-            "randomForestRegressor__min_samples_leaf": randint(1, 11),
+            "randomForestClassifier__n_estimators": randint(10, 200),
+            "randomForestClassifier__max_depth": randint(1, 20),
+            "randomForestClassifier__min_samples_split": randint(2, 11),
+            "randomForestClassifier__min_samples_leaf": randint(1, 11),
         }
         rs = RandomizedSearchCV(
             self.pipeline,
             param_distributions=param_dist,
             n_iter=5,  # TODO change to a bigger number
             cv=5,
-            scoring="neg_mean_absolute_error",
+            scoring="accuracy",
             n_jobs=10,
         )
         rs.fit(x_train, y_train.iloc[:, 0].ravel())
@@ -141,17 +135,17 @@ class Temperature:
         print("training model")
         self.pipeline.set_params(
             **{
-                "randomForestRegressor__n_estimators": best_params[
-                    "randomForestRegressor__n_estimators"
+                "randomForestClassifier__n_estimators": best_params[
+                    "randomForestClassifier__n_estimators"
                 ],
-                "randomForestRegressor__max_depth": best_params[
-                    "randomForestRegressor__max_depth"
+                "randomForestClassifier__max_depth": best_params[
+                    "randomForestClassifier__max_depth"
                 ],
-                "randomForestRegressor__min_samples_split": best_params[
-                    "randomForestRegressor__min_samples_split"
+                "randomForestClassifier__min_samples_split": best_params[
+                    "randomForestClassifier__min_samples_split"
                 ],
-                "randomForestRegressor__min_samples_leaf": best_params[
-                    "randomForestRegressor__min_samples_leaf"
+                "randomForestClassifier__min_samples_leaf": best_params[
+                    "randomForestClassifier__min_samples_leaf"
                 ],
             }
         )
@@ -160,22 +154,28 @@ class Temperature:
     def evaluate(self):
         """
         Rationale for metrics used.
-        Mean Absolute Error: Rombust to outliers,Interpretability
-        Root Mean Squared Error: More interpretable than mean squared error, Less sensitive to large errors
-        r2: Proportion of variance explained, Scale indenpendce compare to the other regression metrics, ease of intepretability
+        Accuracy: Useful for looking at all classes.
+        F1: Balances between precision and recall; the harmonic mean between the two.
+            Useful if the aim is to look at the positives classes only
+        AUC-ROC: prvides insights into the performance of the model
         """
         print("evaluations")
         predictions = self.pipeline.predict(self.x_test)
-        r2 = r2_score(self.y_test, predictions)
-        mae = mean_absolute_error(self.y_test, predictions)
-        rmse = root_mean_squared_error(self.y_test, predictions)
-        print("r square score", r2)
-        print("mean absolute error", mae)
-        print("root mean squared error", rmse)
+        predictions_probabilites = self.pipeline.predict_proba(self.x_test)
+        accuracy = accuracy_score(self.y_test, predictions)
+        f1 = f1_score(self.y_test, predictions, average="macro")
+        roc_auc = roc_auc_score(
+            label_binarize(self.y_test, classes=self.pipeline.classes_),
+            predictions_probabilites,
+            multi_class="ovr",
+        )
+        print("accuracy", accuracy)
+        print("f1", f1)
+        print("roc auc", roc_auc)
 
 
 if __name__ == "__main__":
     db = Utils.connect_sqlite("agri.db")
-    t = Temperature(db)
+    t = Plant_Type_Stage(db)
     t.train()
     t.evaluate()

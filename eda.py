@@ -25,6 +25,7 @@ def __():
     from sklearn.tree import DecisionTreeRegressor
     from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures
     from sklearn.feature_selection import SelectKBest
+    from sklearn.impute import SimpleImputer
 
     from scipy.stats import shapiro, levene, bartlett, ttest_1samp
     from scipy.stats.contingency import association
@@ -44,6 +45,7 @@ def __():
         RandomForestClassifier,
         RandomForestRegressor,
         SelectKBest,
+        SimpleImputer,
         association,
         bartlett,
         levene,
@@ -883,21 +885,26 @@ def __(mo):
 
 
 @app.cell
-def __(MissForest, df_consistent, os, pl):
-    missForestImputer = MissForest(
-        max_iter=5
-    )  # max iter to 3 because 5 iters took too long. but it may be less accurate
+def __():
+    # missForestImputer = MissForest(
+    #     max_iter=5
+    # )  # max iter to 3 because 5 iters took too long. but it may be less accurate
 
-    if not os.path.exists("imputed_cache.csv") or True:
-        print("a")
-        df_imputed = missForestImputer.fit_transform(
-            df_consistent.select(pl.exclude(pl.String())).to_pandas()
-        )
-        df_imputed.to_csv("imputed_cache.csv", index=False)
-    else:
-        print("b")
-        df_imputed = pl.read_csv("imputed_cache.csv").to_pandas()
-    return df_imputed, missForestImputer
+    # if not os.path.exists("imputed_cache.csv") or True:
+    #     print("a")
+    #     df_imputed = missForestImputer.fit_transform(
+    #         df_consistent.select(pl.exclude(pl.String())).to_pandas()
+    #     )
+    #     df_imputed.to_csv("imputed_cache.csv", index=False)
+    # else:
+    #     print("b")
+    #     df_imputed = pl.read_csv("imputed_cache.csv").to_pandas()
+    return
+
+
+@app.cell
+def __():
+    return
 
 
 @app.cell
@@ -1114,7 +1121,7 @@ def __(mo):
         ph	-1.11e-16	2.61e-16	-0.426	0.670	-6.22e-16	4e-16  
         water_level_mm	3.123e-17	1.98e-17	1.576	0.115	-7.61e-18	7.01e-17  
         plant_type_changed	-5.829e-16	2.8e-16	-2.078	0.038	-1.13e-15	-3.32e-17  
-        plant_stage_coded	9.048e-17	1.99e-16	0.455	0.649	-2.99e-16	4.8e-16  
+        plant_stage_coded	9.048e-17	1.99e-16	0.455	0.649	-2.99e-16	4.8e-16
         """
     )
     return
@@ -1279,7 +1286,7 @@ def __(df_imputed, pl, sm):
 
 @app.cell
 def __(mo):
-    mo.md(r"""## the nutrients are really significantly  related to eaach other and these other features like light intensity and plant_stage_coded. nutrients p and k can be removed as discussed in the visualisation sections""")
+    mo.md(r"""## the nutrients are really significantly  related to each other and these other features like light intensity and plant_stage_coded. nutrients p and k can be removed as discussed in the visualisation sections""")
     return
 
 

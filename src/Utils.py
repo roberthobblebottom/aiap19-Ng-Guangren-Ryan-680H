@@ -21,6 +21,54 @@ def connect_sqlite(db_path: str) -> pl.DataFrame:
     return pl.read_database("SELECT * FROM farm_data", connection=connection)
 
 
+def column_rename_and_ensuring_consistency_values(df: pl.DataFrame):
+    # rename column names
+    column_names = [
+        x.replace(" ", "_")
+        .replace("(", "")
+        .replace(")", "")
+        .replace("_Sensor", "")
+        .lower()
+        for x in df.columns
+    ]
+    column_names[0] = "location"
+    column_names[4] = column_names[4][:-2] + "celsius"
+    column_names[5] = column_names[5][:-1] + "percent"
+    column_names[8] = column_names[8][:-2] + "m"
+    df.columns = column_names
+
+    # filter for consistency in the values, it is not need in the cross validation process so it is not in the sklearn pipeline.
+    df = (
+        df.with_columns(
+            pl.col("nutrient_n_ppm").str.replace(" ppm", "").cast(pl.Float64),
+            pl.col("nutrient_p_ppm").str.replace(" ppm", "").cast(pl.Float64),
+            pl.col("nutrient_k_ppm").str.replace(" ppm", "").cast(pl.Float64),
+            pl.col(
+                "location",
+                "previous_cycle_plant_type",
+                "plant_type",
+                "plant_stage",
+            ).str.to_lowercase(),
+        )
+        .with_columns(
+            plant_stage_coded=(
+                pl.when(pl.col("plant_stage") == "seedling")
+                .then(pl.lit(1))
+                .when(pl.col("plant_stage") == "vegetative")
+                .then(pl.lit(2))
+                .when(pl.col("plant_stage") == "maturity")
+                .then(pl.lit(3))
+            ).cast(pl.Int8),
+            plant_type_stage=pl.concat_str(
+                pl.col("plant_type"), pl.lit(" "), pl.col("plant_stage")
+            ),
+        )
+        .unique()  # remove duplicates
+    )
+
+    return df
+
+
 class OutliersRemover(ClassifierMixin, BaseEstimator):
     """Removes outliers as explored in eda.ipynb"""
 
