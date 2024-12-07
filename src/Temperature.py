@@ -1,9 +1,7 @@
 import polars as pl
 
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
-
 from sklearn.ensemble import RandomForestRegressor
-
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline

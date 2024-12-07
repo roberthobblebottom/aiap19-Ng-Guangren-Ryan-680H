@@ -1,12 +1,8 @@
 import polars as pl
 
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
-
 from sklearn.ensemble import RandomForestClassifier
-
 from sklearn.preprocessing import OneHotEncoder, label_binarize
-
-
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer

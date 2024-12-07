@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.9.30"
+__generated_with = "0.9.31"
 app = marimo.App(width="full", app_title="aiap19", auto_download=["html"])
 
 
@@ -700,7 +700,7 @@ def __():
 
 @app.cell
 def __(mo):
-    mo.md(r"""<!-- # Checking on NANs -->""")
+    mo.md(r"""# Checking on NANs""")
     return
 
 
