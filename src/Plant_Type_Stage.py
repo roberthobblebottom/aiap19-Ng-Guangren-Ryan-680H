@@ -61,7 +61,13 @@ class Plant_Type_Stage:
                 "nutrient_k_ppm",  # these two nutrients are removed as discussed in the eda.
                 # "plant_type", # removed from here because it is still needed for outlier removal
             ]
-        ]
+        ]  # the non one hot encoded feature will be used instead.
+        # Same list as the Temperature regression pipeline
+        """
+         ['previous_cycle_plant_type_vine crops', 'previous_cycle_plant_type_fruiting vegetables', 'previous_cycle_plant_type_herbs', 
+         'previous_cycle_plant_type_leafy greens', 'location_zone_e', 'location_zone_c',
+           'location_zone_f', 'location_zone_g', 'location_zone_b', 'location_zone_d', 'location_zone_a', 'plant_type_changed']
+        """
         self.pipeline = Pipeline(
             [
                 (

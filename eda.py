@@ -29,7 +29,8 @@ def __():
 
     from scipy.stats import shapiro, levene, bartlett, ttest_1samp
     from scipy.stats.contingency import association
-
+    from scipy import stats
+    import statsmodels.stats.multicomp as mc
 
     import statsmodels.formula.api as smf
     import statsmodels.api as sm
@@ -49,6 +50,7 @@ def __():
         association,
         bartlett,
         levene,
+        mc,
         missingno,
         mo,
         np,
@@ -59,6 +61,7 @@ def __():
         sm,
         smf,
         sqlite3,
+        stats,
         train_test_split,
         ttest_1samp,
     )
@@ -238,7 +241,7 @@ def __(df):
 def __(mo):
     mo.md(
         r"""
-        ### light_intensity_lux, ec_dsm, temperature_celsius has negatives. light intensity lux, ec_dsm simply can't go negative and crops won't grow in negative temperature. All these features's negatives will be imputed
+        ### light_intensity_lux, ec_dsm, temperature_celsius has negatives. light intensity lux, ec_dsm simply can't go negative and crops won't grow in negative temperature. All these features's negatives outliers will be imputed
 
         source for light_intensity_lux: table under this seciton: https://en.wikipedia.org/wiki/Lux#Illuminance
         """
@@ -306,7 +309,7 @@ def __(df_consistent, px):
 
 @app.cell
 def __(mo):
-    mo.md(r"""### used spearman just in case there are non linearities but seesm that both spearman and pearson shows similar correlations. then I only made scatterplots with higher correlations that is more than 0.6 or less than -0.6 because a bigger scatter plot lags the notebook. plant_type_changed is not as useful as it seems""")
+    mo.md(r"""### used spearman just in case there are non linearities but seesm that both spearman and pearson shows similar correlations. then I only made scatterplots and box plots with higher correlations that is more than 0.6 or less than -0.6 because a bigger scatter plot lags the notebook. my feature plant_type_changed is not as useful as it seems.""")
     return
 
 
@@ -335,15 +338,18 @@ def __(df_consistent, mo, os, px):
 def __(mo):
     mo.md(
         r"""
-        ###Used this scatter plot matrix to check the overall patterns of features of interests to see what pair of features shold I investigated more closely via enlarged scatter plot with trendline and box plots
+        #### nutrient p,k and n seems to have correlations with each other and with light intensity lux, humidity, if you see across all the 3 nutrients, the shapes of the scatter plots are very similar. 
 
-        #### nutrient p and n seems to have correlations to nutrient n and light intensity lux, p and k nutrients may be redundant as shown in the scatter plots matrix above and the following scatter plots below.
+        p and k nutrients may be redundant as shown in the scatter plots matrix above and the following scatter plots below.
 
-        ### the light_intensity_lux is very v shaped for the nutrients introduced and humidity as shown above and below.
+        #### the light_intensity_lux is very v shaped for the nutrients introduced and humidity as shown above and below.
 
-        ### there are interactivities:  
+        #### there are interactivities:  
         between the nutrients   
         between humidity and each of the nutrients but on a milder negative sense
+
+
+        #### Used this scatter plot matrix to check the overall patterns of features of interests to see what pair of features shold I investigated more closely via enlarged scatter plot with trendline and box plots
         """
     )
     return
@@ -510,12 +516,6 @@ def __(df_consistent, mo, os, px):
 
 
 @app.cell
-def __():
-    # os.system("rm -f images/box_plant_type_temp.png")
-    return
-
-
-@app.cell
 def __(mo):
     mo.md(r"""To check I assume crops won't be able to survive such low negative temperatures, these outliers will be handled""")
     return
@@ -641,7 +641,13 @@ def __(df_consistent, px):
 
 @app.cell
 def __(mo):
-    mo.md(r"""### vine crops has overall lowest nutrient k value, leafy green on the 1st quartitle comes next but leafy is also have a wide range.""")
+    mo.md(
+        r"""
+        ### vine crops has overall lowest nutrient k value, leafy green on the 1st quartitle comes next but leafy is also have a wide range.
+
+        ### even across plant type the distribution of the three nutrients are very similar.
+        """
+    )
     return
 
 
@@ -699,6 +705,11 @@ def __():
 
 
 @app.cell
+def __():
+    return
+
+
+@app.cell
 def __(mo):
     mo.md(r"""# Checking on NANs""")
     return
@@ -724,12 +735,7 @@ def __(mo):
 
 @app.cell
 def __(mo):
-    mo.md(
-        """
-        # Getting feature importance for regression task
-        sampling it because at this point of the notebook, it is taking too long to run
-        """
-    )
+    mo.md("""# Getting feature importance for regression task""")
     return
 
 
@@ -778,7 +784,12 @@ def __(feature_importance_regression):
 
 @app.cell
 def __(mo):
-    mo.md("""## these features below will be manually removed in the ml pipeline""")
+    mo.md(
+        """
+        ## these features below will be manually removed in the ml pipeline
+        the non one hot encoded feature will be used instead.
+        """
+    )
     return
 
 
@@ -844,7 +855,7 @@ def __(feature_importance_classification):
 
 @app.cell
 def __(mo):
-    mo.md("""## these features below will be manually removed in the ml pipeline""")
+    mo.md("""## these features below will be manually removed in the ml pipeline ( they are the same with the regression task less important features). the non one hot encoded feature will be used instead.""")
     return
 
 
@@ -864,7 +875,7 @@ def __(mo):
     mo.md(
         r"""
         # feature importances finding
-        in both classficaiton and regression task, nutrient k has alot of important following nutrient n and p which backs up the box plots, sctter plots and correlation heatmaps that was previously discussed too  
+        in both classficaiton and regression task, nutrient k has alot of important following nutrient n and p which backs up the box plots, scatter plots and correlation heatmaps that was previously discussed too  
 
         humidity is not as important just like the previous correlations heatmaps, scatter plots have suggested.
         """
@@ -879,6 +890,8 @@ def __(mo):
         # Hypothesis testing for classifcaiton against target
 
         ## Test of normality
+
+        Shapiros is not sensitive to outliers
         """
     )
     return
@@ -903,8 +916,13 @@ def __():
 
 
 @app.cell
-def __():
-    return
+def __(SimpleImputer, df_consistent, pl):
+    df_imputed = (
+        SimpleImputer()
+        .set_output(transform="polars")
+        .fit_transform(df_consistent.select(pl.exclude(pl.String())).to_pandas())
+    )
+    return (df_imputed,)
 
 
 @app.cell
@@ -951,9 +969,7 @@ def __(bartlett, df_consistent, df_imputed, pl):
         return l
 
 
-    _d = pl.from_pandas(df_imputed).hstack(
-        df_consistent.select("plant_type_stage")
-    )
+    _d = df_imputed.hstack(df_consistent.select("plant_type_stage"))
 
     pl.DataFrame(
         (
@@ -985,26 +1001,25 @@ def __(mo):
 
 
 @app.cell
-def __(df_consistent, df_imputed, pl, ttest_1samp):
-    _d = pl.from_pandas(df_imputed).hstack(
-        df_consistent.select("plant_type_stage")
-    )
+def __(df_consistent, df_imputed, mc, pl, stats):
+    _d = df_imputed.hstack(df_consistent.select("plant_type_stage"))
 
-    pl.DataFrame(
-        (
-            list(ttest_1samp(_d["nutrient_k_ppm"], _d["nutrient_k_ppm"].mean())),
-            list(ttest_1samp(_d["nutrient_p_ppm"], _d["nutrient_p_ppm"].mean())),
-            list(ttest_1samp(_d["nutrient_n_ppm"], _d["nutrient_n_ppm"].mean())),
-            list(
-                ttest_1samp(_d["humidity_percent"], _d["humidity_percent"].mean())
-            ),
-            list(
-                ttest_1samp(
-                    _d["light_intensity_lux"], _d["light_intensity_lux"].mean()
-                )
-            ),
-        )
-    ).transpose(column_names=["statistic", "p value"]).hstack(
+    comp1 = mc.MultiComparison(_d["nutrient_k_ppm"], _d["plant_type_stage"])
+    tbl, a1, a2 = comp1.allpairtest(stats.ttest_ind, method="bonf")
+    k = pl.DataFrame(a2).mean().select("pval")
+    comp1 = mc.MultiComparison(_d["nutrient_p_ppm"], _d["plant_type_stage"])
+    tbl, a1, a2 = comp1.allpairtest(stats.ttest_ind, method="bonf")
+    p = pl.DataFrame(a2).mean().select("pval")
+    comp1 = mc.MultiComparison(_d["nutrient_n_ppm"], _d["plant_type_stage"])
+    tbl, a1, a2 = comp1.allpairtest(stats.ttest_ind, method="bonf")
+    n = pl.DataFrame(a2).mean().select("pval")
+    comp1 = mc.MultiComparison(_d["humidity_percent"], _d["plant_type_stage"])
+    tbl, a1, a2 = comp1.allpairtest(stats.ttest_ind, method="bonf")
+    humidity_percent = pl.DataFrame(a2).mean().select("pval")
+    comp1 = mc.MultiComparison(_d["light_intensity_lux"], _d["plant_type_stage"])
+    tbl, a1, a2 = comp1.allpairtest(stats.ttest_ind, method="bonf")
+    lux = pl.DataFrame(a2).mean().select("pval")
+    pl.concat([k, p, n, humidity_percent, lux]).rename({"pval": "p value"}).hstack(
         pl.DataFrame(
             [
                 "nutrient_k_ppm",
@@ -1015,8 +1030,8 @@ def __(df_consistent, df_imputed, pl, ttest_1samp):
             ],
             schema=["feature"],
         )
-    ).select("feature", "statistic", "p value")
-    return
+    ).select("feature", "p value")
+    return a1, a2, comp1, humidity_percent, k, lux, n, p, tbl
 
 
 @app.cell
@@ -1027,8 +1042,8 @@ def __(mo):
 
 @app.cell
 def __(association, df_imputed, pl):
-    _d = pl.from_pandas(df_imputed)
-    _d = _d.with_columns(pl.all().cast(pl.Int64))
+    # _d = pl.from_pandas(df_imputed)
+    _d = df_imputed.with_columns(pl.all().cast(pl.Int64))
     pl.DataFrame(
         (
             list(
@@ -1088,8 +1103,7 @@ def __(df_consistent, df_imputed, pl, sm):
     _df = df_consistent.filter(~pl.col("temperature_celsius").is_nan())
     _y = _df["temperature_celsius"].to_pandas()
     _x = (
-        pl.from_pandas(df_imputed)
-        .hstack(
+        df_imputed.hstack(
             df_consistent.select("temperature_celsius").rename(
                 {"temperature_celsius": "temperature_celsius_2"}
             )
@@ -1109,19 +1123,20 @@ def __(df_consistent, df_imputed, pl, sm):
 def __(mo):
     mo.md(
         r"""
-        temperature_celsius	1.0000	1.44e-17	6.94e+16	0.000	1.000	1.000  
-        humidity_percent	-5.447e-16	1.92e-17	-28.384	0.000	-5.82e-16	-5.07e-16  
-        light_intensity_lux	-9.842e-17	6.05e-19	-162.747	0.000	-9.96e-17	-9.72e-17  
-        co2_ppm	2.374e-17	8.19e-19	28.995	0.000	2.21e-17	2.53e-17   
-        ec_dsm	-6.384e-16	2.66e-16	-2.396	0.017	-1.16e-15	-1.16e-16  
-        o2_ppm	1.921e-16	1e-16	1.919	0.055	-4.07e-18	3.88e-16  
-        nutrient_n_ppm	-1.392e-16	4.19e-18	-33.203	0.000	-1.47e-16	-1.31e-16  
-        nutrient_p_ppm	1.078e-15	1.15e-17	93.639	0.000	1.06e-15	1.1e-15  
-        nutrient_k_ppm	-2.559e-17	2.89e-18	-8.853	0.000	-3.13e-17	-1.99e-17  
-        ph	-1.11e-16	2.61e-16	-0.426	0.670	-6.22e-16	4e-16  
-        water_level_mm	3.123e-17	1.98e-17	1.576	0.115	-7.61e-18	7.01e-17  
-        plant_type_changed	-5.829e-16	2.8e-16	-2.078	0.038	-1.13e-15	-3.32e-17  
-        plant_stage_coded	9.048e-17	1.99e-16	0.455	0.649	-2.99e-16	4.8e-16
+        coef	std err	t	P>|t|	[0.025	0.975]  
+        temperature_celsius	1.0000	5.39e-17	1.85e+16	0.000	1.000	1.000  
+        humidity_percent	-4.927e-16	7.66e-17	-6.434	0.000	-6.43e-16	-3.43e-16  
+        light_intensity_lux	7.969e-17	2.21e-18	36.027	0.000	7.54e-17	8.4e-17  
+        co2_ppm	-1.298e-17	3.02e-18	-4.304	0.000	-1.89e-17	-7.07e-18  
+        ec_dsm	9.09e-16	9.99e-16	0.910	0.363	-1.05e-15	2.87e-15  
+        o2_ppm	-7.008e-16	3.72e-16	-1.882	0.060	-1.43e-15	2.9e-17  
+        nutrient_n_ppm	1.76e-16	1.38e-17	12.731	0.000	1.49e-16	2.03e-16  
+        nutrient_p_ppm	-8.5e-17	3.95e-17	-2.153	0.031	-1.62e-16	-7.6e-18  
+        nutrient_k_ppm	2.353e-17	9.98e-18	2.358	0.018	3.97e-18	4.31e-17  
+        ph	-2.498e-15	9.71e-16	-2.573	0.010	-4.4e-15	-5.95e-16  
+        water_level_mm	-2.255e-16	7.45e-17	-3.026	0.002	-3.72e-16	-7.94e-17  
+        plant_type_changed	-1.776e-15	1.05e-15	-1.685	0.092	-3.84e-15	2.9e-16  
+        plant_stage_coded	-2.695e-16	7.18e-16	-0.375	0.708	-1.68e-15	1.14e-15
         """
     )
     return
@@ -1139,9 +1154,9 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, pl, sm):
+def __(df_imputed, sm):
     _model = sm.OLS(
-        pl.from_pandas(df_imputed).select("nutrient_n_ppm").to_pandas(),
+        df_imputed.select("nutrient_n_ppm").to_pandas(),
         df_imputed["nutrient_k_ppm"],
     ).fit()
     _model.summary().tables[1]
@@ -1155,9 +1170,9 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, pl, sm):
+def __(df_imputed, sm):
     _model = sm.OLS(
-        pl.from_pandas(df_imputed).select("nutrient_n_ppm").to_pandas(),
+        df_imputed.select("nutrient_n_ppm").to_pandas(),
         df_imputed["nutrient_p_ppm"],
     ).fit()
     _model.summary().tables[1]
@@ -1171,9 +1186,9 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, pl, sm):
+def __(df_imputed, sm):
     _model = sm.OLS(
-        pl.from_pandas(df_imputed).select("nutrient_p_ppm").to_pandas(),
+        df_imputed.select("nutrient_p_ppm").to_pandas(),
         df_imputed["nutrient_k_ppm"],
     ).fit()
     _model.summary().tables[1]
@@ -1187,18 +1202,23 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, np, smf):
+def __(np):
+    def poly(x, degree):
+        return np.vander(x, degree + 1, increasing=True)[:, 1:]
+    return (poly,)
+
+
+@app.cell
+def __(df_imputed, poly, sm):
     _df = df_imputed[["nutrient_n_ppm", "light_intensity_lux"]]
     _df.columns = ["y", "x"]
 
 
-    def poly(x, degree):
-        return np.vander(x, degree + 1, increasing=True)[:, 1:]
-
-
-    results = smf.ols(formula="y ~ poly(x, 2)", data=_df).fit()
-    results.summary().tables[1]
-    return poly, results
+    _X_poly = poly(_df["x"], 2)
+    _X_poly = sm.add_constant(_X_poly)
+    _results = sm.OLS(_df["y"].to_numpy(), _X_poly).fit()
+    _results.summary().tables[1]
+    return
 
 
 @app.cell
@@ -1208,13 +1228,13 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, results, smf):
-    results
+def __(df_imputed, poly, sm):
     _df = df_imputed[["nutrient_p_ppm", "light_intensity_lux"]]
     _df.columns = ["y", "x"]
 
-
-    _results = smf.ols(formula="y ~ poly(x, 2)", data=_df).fit()
+    _X_poly = poly(_df["x"], 2)
+    _X_poly = sm.add_constant(_X_poly)
+    _results = sm.OLS(_df["y"].to_numpy(), _X_poly).fit()
     _results.summary().tables[1]
     return
 
@@ -1226,12 +1246,13 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, smf):
+def __(df_imputed, poly, sm):
     _df = df_imputed[["nutrient_k_ppm", "light_intensity_lux"]]
     _df.columns = ["y", "x"]
 
-
-    _results = smf.ols(formula="y ~ poly(x, 2)", data=_df).fit()
+    _X_poly = poly(_df["x"], 2)
+    _X_poly = sm.add_constant(_X_poly)
+    _results = sm.OLS(_df["y"].to_numpy(), _X_poly).fit()
     _results.summary().tables[1]
     return
 
@@ -1243,9 +1264,9 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, pl, sm):
+def __(df_imputed, sm):
     _model = sm.OLS(
-        pl.from_pandas(df_imputed).select("plant_stage_coded").to_pandas(),
+        df_imputed.select("plant_stage_coded").to_pandas(),
         df_imputed["nutrient_k_ppm"],
     ).fit()
     _model.summary().tables[1]
@@ -1259,9 +1280,9 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, pl, sm):
+def __(df_imputed, sm):
     _model = sm.OLS(
-        pl.from_pandas(df_imputed).select("plant_stage_coded").to_pandas(),
+        df_imputed.select("plant_stage_coded").to_pandas(),
         df_imputed["nutrient_n_ppm"],
     ).fit()
     _model.summary().tables[1]
@@ -1275,9 +1296,9 @@ def __(mo):
 
 
 @app.cell
-def __(df_imputed, pl, sm):
+def __(df_imputed, sm):
     _model = sm.OLS(
-        pl.from_pandas(df_imputed).select("plant_stage_coded").to_pandas(),
+        df_imputed.select("plant_stage_coded").to_pandas(),
         df_imputed["nutrient_p_ppm"],
     ).fit()
     _model.summary().tables[1]
@@ -1286,7 +1307,63 @@ def __(df_imputed, pl, sm):
 
 @app.cell
 def __(mo):
-    mo.md(r"""## the nutrients are really significantly  related to each other and these other features like light intensity and plant_stage_coded. nutrients p and k can be removed as discussed in the visualisation sections""")
+    mo.md("""## humidity_percent v nutrient_n_ppm""")
+    return
+
+
+@app.cell
+def __(df_imputed, sm):
+    _model = sm.OLS(
+        df_imputed.select("humidity_percent").to_pandas(),
+        df_imputed["nutrient_n_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md("""## humidity_percent v nutrient_k_ppm""")
+    return
+
+
+@app.cell
+def __(df_imputed, sm):
+    _model = sm.OLS(
+        df_imputed.select("humidity_percent").to_pandas(),
+        df_imputed["nutrient_k_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md("""## humidity_percent v nutrient_p_ppm""")
+    return
+
+
+@app.cell
+def __(df_imputed, sm):
+    _model = sm.OLS(
+        df_imputed.select("humidity_percent").to_pandas(),
+        df_imputed["nutrient_p_ppm"],
+    ).fit()
+    _model.summary().tables[1]
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        ## the nutrients are staticially significantly  related to each other and these other features like light_intensity_lux, humidity_percent and plant_stage_coded. (alpha = 0.05) 
+
+        ##the p values for regression task compared to the target  (temperature) are significant, nutrients p and k can be removed as discussed in the visualisation sections. but for classfication task since k is the only one significant of all the nutrients, p and n will be removed
+
+
+        """
+    )
     return
 
 
