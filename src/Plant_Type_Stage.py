@@ -15,7 +15,6 @@ import pandas as pd
 
 class Plant_Type_Stage:
     def __init__(self, df: pl.DataFrame) -> None:
-
         print("Plant_type_stage.py init")
         df = Utils.column_rename_and_ensuring_consistency_values(df)
 
@@ -78,7 +77,10 @@ class Plant_Type_Stage:
                     ),
                 ),
                 ("outliersRemover", Utils.OutliersRemover(include_temperature=True)),
-                ("columnTransformerForOneHotEncoding", column_transformer),
+                (
+                    "columnTransformerForOneHotEncoding",
+                    column_transformer,
+                ),  # TODO REMOVE ONE HOT ENCODING AND PUT COLUMN TRANSFORMER IN SIMPLEIMPUTER
                 (
                     "simpleImputer",
                     SimpleImputer(strategy="median"),

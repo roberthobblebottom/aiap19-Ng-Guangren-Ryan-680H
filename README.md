@@ -1,17 +1,18 @@
-a) Ng Guangren, Ryan ryan.ng@protonmail.com
-
-b) folder structure: 
-eda.py
-requirements.txt  
-eda.ipynb
-__marimo__ TODO
-README.md
-run.sh
-src
-- Temperature.py
-- Plant_Type_Stage.py
-
-c) in command line, type in:
+a) Ng Guangren, Ryan ryan.ng@protonmail.com  
+  
+b) folder structure:  
+requirements.txt    
+eda.ipynb  
+marimo_notebooks/   
+-- eda.py  
+-- eda.html  
+README.md  
+run.sh  
+src/  
+-- Temperature.py  
+-- Plant_Type_Stage.py  
+  
+c) in command line, type in:  
 cd <TO-MY-SUBMISSION-FOLDER>
 pip install -r requirements.txt
 Bash run.sh # to run both Temperature and Plant_Type_Stage pipelines
@@ -20,11 +21,11 @@ d) For both Classification and Regression Tasks:
 1 connection to database
 2 rename columns and make feature values consistent
 3 init pipeline
-        NonImportantFeaturesRemover() As discussed in EDA, removing the non important features
-        outliersFremover()
-        ColumnsTransformerForOneHotEncoding()
-        SimpleImputer() Median Strategy
-        Either RandomForestClassifier or RandomForestRegressor for Plant_Type_Stage and Temperature respectively
+        3.1 NonImportantFeaturesRemover() As discussed in EDA, removing the non important features
+        3.2 outliersFremover()
+        3.3 ColumnsTransformerForOneHotEncoding()
+        3.4 SimpleImputer() Median Strategy TODO REMOVE ONE HOT ENCODING AND PUT COLUMN TRANSFORMER IN SIMPLEIMPUTER
+        3.5 Either RandomForestClassifier or RandomForestRegressor for Plant_Type_Stage and Temperature respectively
 4 train(): train test split
 5 train(): RandomSearchCV() with 5 fold cross validation
 6 evaluate(): the pipeline.predict() and pipeline.predict_proba() and respective metrics are calculated on respective model tasks 
@@ -37,22 +38,20 @@ f) Describe how the features in the dataset are processed (summarised in a table
 TODO
 
 g) 
-Both tasks uses RandomForests from sklearn:
-RandomForestClassifier
-RandomForestRegressor
+Both tasks uses RandomForests from sklearn:  
+RandomForestClassifier for Plant_Type_Stage task and RandomForestRegressor for Temperature task
 
 Rationale:
-High acurracy
-robust to outliers and noise (but I will still remove the outliers as found in the eda. probably has little effect including the outliers remover in the pipeline)
+High accuracy
+robust to outliers and noise (but I will still remove the outliers as found in the eda. probably has little effect including the outliers remover in the pipeline, likely more useful for gradientboosting models)
 handles combination of numerical and categorial.
 non parametic nture where it does not assume things about the distribution or correlations between x and y.
-but SimpleImputer requires all to be numerical so 
+but SimpleImputer requires all to be numerical so TODO
 less likely to overfit than gradientboosting models and some linear regression models.
 
 but the downside probabilty less accurate than gradientboosting models
 
 h) Rational for metrics used:
-
 Regression Task: 
         Mean Absolute Error: Rombust to outliers,Interpretability
         Root Mean Squared Error: More interpretable than mean squared error, Less sensitive to large errors
@@ -63,4 +62,4 @@ Classification Task:
             Useful if the aim is to look at the positives classes only
         AUC-ROC: provides insights into the performance of the model
 
-i) EDA is initially done on marimo notebook and exported to ipynb format.
+i) EDA is initially done on marimo notebook and exported to ipynb format. You may also look at the marimo notebook output via opening marimo_notebooks/eda.html
