@@ -1,3 +1,5 @@
 *.db
 images/*
+marimo_notebook/*db
+marimo_notebook/images/
 *.csv

@@ -146,11 +146,6 @@ def __(df):
 
 
 @app.cell
-def __():
-    return
-
-
-@app.cell
 def __(df):
     df["plant_stage"].unique()
     return
@@ -314,7 +309,7 @@ def __(mo):
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
+def __(df_consistent, px):
     _names = [
         "humidity_percent",
         "light_intensity_lux",
@@ -323,14 +318,15 @@ def __(df_consistent, mo, os, px):
         "nutrient_k_ppm",
         "plant_stage_coded",
     ]
-    if not os.path.exists("images/scatterplot_matrix.png"):
-        print("here")
-        px.scatter_matrix(
-            df_consistent.select(_names).to_pandas(),
-        ).update_layout(width=1000, height=1000).write_image(
-            "images/scatterplot_matrix.png"
-        )
-    mo.image("images/scatterplot_matrix.png")
+    # if not os.path.exists("images/scatterplot_matrix.png"):
+    #     print("here")
+    px.scatter_matrix(
+        df_consistent.select(_names).to_pandas(),
+    ).update_layout(width=1000, height=1000)
+    #     .write_image(
+    #         "images/scatterplot_matrix.png"
+    #     )
+    # mo.image("images/scatterplot_matrix.png")
     return
 
 
@@ -356,93 +352,95 @@ def __(mo):
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/scatterplot_n_lux.png"):
-        px.scatter(
-            df_consistent.to_pandas(),
-            x="light_intensity_lux",
-            y="nutrient_n_ppm",
-            trendline="lowess",
-            trendline_color_override="red",
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/scatterplot_n_lux.png")
-    mo.image("images/scatterplot_n_lux.png")
-    return
-
-
-app._unparsable_cell(
-    r"""
-    # if not os.path.exists(\"images/scatterplot_p_lux.png\"):
-        px.scatter(
-            df_consistent.to_pandas(),
-            x=\"light_intensity_lux\",
-            y=\"nutrient_p_ppm\",
-            trendline=\"lowess\",
-            trendline_color_override=\"red\",
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        )
-    # .write_image(\"images/scatterplot_p_lux.png\")
-    # mo.image(\"images/scatterplot_p_lux.png\")
-    """,
-    name="__"
-)
-
-
-@app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/scatterplot_humidity_p.png"):
-        px.scatter(
-            df_consistent.to_pandas(),
-            x="humidity_percent",
-            y="nutrient_k_ppm",
-            trendline="lowess",
-            trendline_color_override="red",
-            title="slight negative trend of nutrient k and humidity",
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/scatterplot_humidity_p.png")
-    mo.image("images/scatterplot_humidity_p.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/scatterplot_n_lux.png"):
+    px.scatter(
+        df_consistent.to_pandas(),
+        x="light_intensity_lux",
+        y="nutrient_n_ppm",
+        trendline="lowess",
+        trendline_color_override="red",
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+        # .write_image("images/scatterplot_n_lux.png")
+    # mo.image("images/scatterplot_n_lux.png")
     return
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/scatterplot_k_p.png"):
-        px.scatter(
-            df_consistent.to_pandas(),
-            x="nutrient_p_ppm",
-            y="nutrient_k_ppm",
-            trendline="lowess",
-            trendline_color_override="red",
-            title=" positive trend of nutrient k and nutrient p",
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/scatterplot_k_p.png")
-    mo.image("images/scatterplot_k_p.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/scatterplot_p_lux.png"):
+    px.scatter(
+        df_consistent.to_pandas(),
+        x="light_intensity_lux",
+        y="nutrient_p_ppm",
+        trendline="lowess",
+        trendline_color_override="red",
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+    #     .write_image("images/scatterplot_p_lux.png")
+    # mo.image("images/scatterplot_p_lux.png")
     return
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/scatterplot_n_p.png"):
-        px.scatter(
-            df_consistent.to_pandas(),
-            x="nutrient_p_ppm",
-            y="nutrient_n_ppm",
-            trendline="lowess",
-            trendline_color_override="red",
-            title="slight positive trend of nutrient n and nutrient p",
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/scatterplot_n_p.png")
-    mo.image("images/scatterplot_n_p.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/scatterplot_humidity_p.png"):
+    px.scatter(
+        df_consistent.to_pandas(),
+        x="humidity_percent",
+        y="nutrient_k_ppm",
+        trendline="lowess",
+        trendline_color_override="red",
+        title="slight negative trend of nutrient k and humidity",
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+    #     .write_image("images/scatterplot_humidity_p.png")
+    # mo.image("images/scatterplot_humidity_p.png")
+    return
+
+
+@app.cell
+def __(df_consistent, px):
+    # if not os.path.exists("images/scatterplot_k_p.png"):
+    px.scatter(
+        df_consistent.to_pandas(),
+        x="nutrient_p_ppm",
+        y="nutrient_k_ppm",
+        trendline="lowess",
+        trendline_color_override="red",
+        title=" positive trend of nutrient k and nutrient p",
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+        # .write_image("images/scatterplot_k_p.png")
+    # mo.image("images/scatterplot_k_p.png")
+    return
+
+
+@app.cell
+def __(df_consistent, px):
+    # if not os.path.exists("images/scatterplot_n_p.png"):
+    px.scatter(
+        df_consistent.to_pandas(),
+        x="nutrient_p_ppm",
+        y="nutrient_n_ppm",
+        trendline="lowess",
+        trendline_color_override="red",
+        title="slight positive trend of nutrient n and nutrient p",
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+    #     .write_image("images/scatterplot_n_p.png")
+    # mo.image("images/scatterplot_n_p.png")
     return
 
 
@@ -459,41 +457,46 @@ def __(mo):
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/box_k_plant_stage.png"):
-        px.box(
-            df_consistent.to_pandas(), y="nutrient_k_ppm", x="plant_stage"
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/box_k_plant_stage.png")
-    mo.image("images/box_k_plant_stage.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/box_k_plant_stage.png"):
+    px.box(
+        df_consistent.to_pandas(), y="nutrient_k_ppm", x="plant_stage"
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+    #     .write_image("images/box_k_plant_stage.png")
+    # mo.image("images/box_k_plant_stage.png")
     return
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/box_n_plant_stage.png"):
-        px.box(
-            df_consistent.to_pandas(), y="nutrient_n_ppm", x="plant_stage"
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/box_n_plant_stage.png")
-    mo.image("images/box_n_plant_stage.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/box_n_plant_stage.png"):
+    px.box(
+        df_consistent.to_pandas(), y="nutrient_n_ppm", x="plant_stage"
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+    #     .write_image("images/box_n_plant_stage.png")
+    # mo.image("images/box_n_plant_stage.png")
     return
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/box_p_plant_stage.png"):
-        px.box(
-            df_consistent.to_pandas(), y="nutrient_p_ppm", x="plant_stage"
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/box_p_plant_stage.png")
-    mo.image("images/box_p_plant_stage.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/box_p_plant_stage.png"):
+    px.box(
+        df_consistent.to_pandas(), y="nutrient_p_ppm", x="plant_stage"
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+
+
+    #     .write_image("images/box_p_plant_stage.png")
+    # mo.image("images/box_p_plant_stage.png")
     return
 
 
@@ -504,17 +507,18 @@ def __(mo):
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/box_plant_type_temp.png"):
-        px.box(
-            df_consistent.to_pandas(),
-            x="plant_type",
-            y="temperature_celsius",
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/box_plant_type_temp.png")
-    mo.image("images/box_plant_type_temp.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/box_plant_type_temp.png"):
+    px.box(
+        df_consistent.to_pandas(),
+        x="plant_type",
+        y="temperature_celsius",
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+    #     .write_image("images/box_plant_type_temp.png")
+    # mo.image("images/box_plant_type_temp.png")
     return
 
 
@@ -525,34 +529,36 @@ def __(mo):
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/box_plant_type_humidity.png"):
-        px.box(
-            df_consistent.to_pandas(),
-            x="plant_type",
-            y="humidity_percent",
-            title="vine crops has higher 25th, 50th and 75t percentile points than the other plant types",
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/box_plant_type_humidity.png")
-    mo.image("images/box_plant_type_humidity.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/box_plant_type_humidity.png"):
+    px.box(
+        df_consistent.to_pandas(),
+        x="plant_type",
+        y="humidity_percent",
+        title="vine crops has higher 25th, 50th and 75t percentile points than the other plant types",
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+    #     .write_image("images/box_plant_type_humidity.png")
+    # mo.image("images/box_plant_type_humidity.png")
     return
 
 
 @app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/box_plant_type_lux.png"):
-        px.box(
-            df_consistent.to_pandas(),
-            x="plant_type",
-            y="light_intensity_lux",
-            title="",
-        ).update_layout(
-            dragmode=False,  # Disable dragging
-            hovermode=False,  # Disable hover info
-        ).write_image("images/box_plant_type_lux.png")
-    mo.image("images/box_plant_type_lux.png")
+def __(df_consistent, px):
+    # if not os.path.exists("images/box_plant_type_lux.png"):
+    px.box(
+        df_consistent.to_pandas(),
+        x="plant_type",
+        y="light_intensity_lux",
+        title="",
+    ).update_layout(
+        dragmode=False,  # Disable dragging
+        hovermode=False,  # Disable hover info
+    )
+    #     .write_image("images/box_plant_type_lux.png")
+    # mo.image("images/box_plant_type_lux.png")
     return
 
 
