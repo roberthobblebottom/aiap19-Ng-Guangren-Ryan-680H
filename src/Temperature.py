@@ -18,7 +18,7 @@ from scipy.stats import randint
 
 class Temperature:
     def __init__(self, df: pl.DataFrame) -> None:
-
+        print("Temperature.py init")
         df = Utils.column_rename_and_ensuring_consistency_values(df)
 
         # Some guards to prevent incorrect inputs or formats from being trained and tested

@@ -11,8 +11,6 @@ src
 - Temperature.py
 - Plant_Type_Stage.py
 
-
-
 c) in command line, type in:
 cd <TO-MY-SUBMISSION-FOLDER>
 pip install -r requirements.txt
@@ -22,6 +20,11 @@ d) For both Classification and Regression Tasks:
 1 connection to database
 2 rename columns and make feature values consistent
 3 init pipeline
+        NonImportantFeaturesRemover() As discussed in EDA, removing the non important features
+        outliersFremover()
+        ColumnsTransformerForOneHotEncoding()
+        SimpleImputer() Median Strategy
+        Either RandomForestClassifier or RandomForestRegressor for Plant_Type_Stage and Temperature respectively
 4 train(): train test split
 5 train(): RandomSearchCV() with 5 fold cross validation
 6 evaluate(): the pipeline.predict() and pipeline.predict_proba() and respective metrics are calculated on respective model tasks 
@@ -33,20 +36,20 @@ the p values for regression task compared to the target  (temperature) are signi
 f) Describe how the features in the dataset are processed (summarised in a table).
 TODO
 
-
-g) Explanation of your choice of models for each machine learning task.
+g) 
+Both tasks uses RandomForests from sklearn:
 RandomForestClassifier
-
 RandomForestRegressor
 
+Rationale:
+High acurracy
+robust to outliers and noise (but I will still remove the outliers as found in the eda. probably has little effect including the outliers remover in the pipeline)
+handles combination of numerical and categorial.
+non parametic nture where it does not assume things about the distribution or correlations between x and y.
+but SimpleImputer requires all to be numerical so 
+less likely to overfit than gradientboosting models and some linear regression models.
 
-
-robust to outliers
-
-less likely to overfite than gradientboosting models and some linear regression models.
-
-TODO
-
+but the downside probabilty less accurate than gradientboosting models
 
 h) Rational for metrics used:
 
