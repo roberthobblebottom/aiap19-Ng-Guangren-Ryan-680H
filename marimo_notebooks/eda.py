@@ -81,7 +81,7 @@ def __(mo):
 
 @app.cell
 def __(pl, sqlite3):
-    connection = sqlite3.connect("agri.db")
+    connection = sqlite3.connect("../agri.db")
     df = pl.read_database("SELECT * FROM farm_data", connection=connection)
 
     column_names = [
@@ -1360,8 +1360,6 @@ def __(mo):
         ## the nutrients are staticially significantly  related to each other and these other features like light_intensity_lux, humidity_percent and plant_stage_coded. (alpha = 0.05) 
 
         ##the p values for regression task compared to the target  (temperature) are significant, nutrients p and k can be removed as discussed in the visualisation sections. but for classfication task since k is the only one significant of all the nutrients, p and n will be removed
-
-
         """
     )
     return

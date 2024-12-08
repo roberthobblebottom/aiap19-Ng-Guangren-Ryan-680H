@@ -79,10 +79,7 @@ class Temperature:
                     ),
                 ),
                 ("outliersRemover", Utils.OutliersRemover()),
-                (
-                    "columnTransformerForOneHotEncoding",
-                    column_transformer,
-                ),  # TODO REMOVE ONE HOT ENCODING AND PUT COLUMN TRANSFORMER IN SIMPLEIMPUTER
+                ("columnTransformerForOneHotEncoding", column_transformer),
                 (
                     "simpleImputer",
                     SimpleImputer(strategy="median"),

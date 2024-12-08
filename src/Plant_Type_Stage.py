@@ -80,11 +80,11 @@ class Plant_Type_Stage:
                 (
                     "columnTransformerForOneHotEncoding",
                     column_transformer,
-                ),  # TODO REMOVE ONE HOT ENCODING AND PUT COLUMN TRANSFORMER IN SIMPLEIMPUTER
-                (
-                    "simpleImputer",
-                    SimpleImputer(strategy="median"),
-                ),  # MissForest was not working because it kept detecting temperature
+                ),
+                # (
+                #     "simpleImputer",
+                #     SimpleImputer(strategy="median"),
+                # ),  # MissForest was not working because it kept detecting temperature
                 # even though I removed it from features.
                 # replaced with Simpleimputer for speed and availability
                 (
