@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.9.31"
+__generated_with = "0.9.32"
 app = marimo.App(width="full", app_title="aiap19", auto_download=["html"])
 
 
@@ -372,21 +372,24 @@ def __(df_consistent, mo, os, px):
     return
 
 
-@app.cell
-def __(df_consistent, mo, os, px):
-    if not os.path.exists("images/scatterplot_p_lux.png"):
+app._unparsable_cell(
+    r"""
+    # if not os.path.exists(\"images/scatterplot_p_lux.png\"):
         px.scatter(
             df_consistent.to_pandas(),
-            x="light_intensity_lux",
-            y="nutrient_p_ppm",
-            trendline="lowess",
-            trendline_color_override="red",
+            x=\"light_intensity_lux\",
+            y=\"nutrient_p_ppm\",
+            trendline=\"lowess\",
+            trendline_color_override=\"red\",
         ).update_layout(
             dragmode=False,  # Disable dragging
             hovermode=False,  # Disable hover info
-        ).write_image("images/scatterplot_p_lux.png")
-    mo.image("images/scatterplot_p_lux.png")
-    return
+        )
+    # .write_image(\"images/scatterplot_p_lux.png\")
+    # mo.image(\"images/scatterplot_p_lux.png\")
+    """,
+    name="__"
+)
 
 
 @app.cell

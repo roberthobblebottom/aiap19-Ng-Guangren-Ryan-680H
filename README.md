@@ -52,7 +52,7 @@ High accuracy
 robust to outliers and noise (but outliers are still removed as found in the eda. probably has little effect including the outliers remover in the pipeline, likely more useful for gradientboosting models)  
 ~~handles combination of numerical and categorial.~~  (upon testing RandomForestRegressor and RandomForestClassifer requires all features to be normial)
 non parametic nture where it does not assume things about the distribution or correlations between x and y.  
-but SimpleImputer requires all to be numerical so TODO  
+but `SimpleImputer` and the Random Forest models requires all to be numerical   
 less likely to overfit than gradientboosting models and some linear regression models.  
   
 but the downside probably less accurate than gradientboosting models  
