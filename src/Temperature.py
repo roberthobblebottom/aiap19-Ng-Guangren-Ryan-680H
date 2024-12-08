@@ -40,8 +40,6 @@ class Temperature:
                     OneHotEncoder(),
                     [
                         "plant_type",
-                        "plant_stage",
-                        "plant_type_stage",
                     ],
                 ),
                 (

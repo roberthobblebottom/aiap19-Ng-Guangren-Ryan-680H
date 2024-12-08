@@ -48,7 +48,9 @@ def column_rename_and_ensuring_consistency_values(df: pl.DataFrame):
                 "previous_cycle_plant_type",
                 "plant_type",
                 "plant_stage",
-            ).str.to_lowercase(),
+            )
+            .str.to_lowercase()
+            .str.replace(" ", "_"),
         )
         .with_columns(
             plant_stage_coded=(
@@ -60,7 +62,7 @@ def column_rename_and_ensuring_consistency_values(df: pl.DataFrame):
                 .then(pl.lit(3))
             ).cast(pl.Int8),
             plant_type_stage=pl.concat_str(
-                pl.col("plant_type"), pl.lit(" "), pl.col("plant_stage")
+                pl.col("plant_type"), pl.lit("_"), pl.col("plant_stage")
             ),
         )
         .unique()  # remove duplicates
@@ -94,6 +96,18 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
             pl.DataFrame: features DataFrame with outliers removed
         """
         X = pl.from_pandas(X).with_columns(
+            plant_type=pl.when(
+                ~pl.col("plant_type").is_in(
+                    ["fruiting_vegetables", "herbs", "leafy_greens", "vine_crops"]
+                )
+            )
+            .then(pl.lit("None"))
+            .otherwise(pl.col("plant_type")),
+            plant_stage=pl.when(
+                ~pl.col("plant_stage").is_in(["seedling", "vegetative", "maturity"])
+            )
+            .then(pl.lit("None"))
+            .otherwise(pl.col("plant_stage")),
             o2_ppm=pl.when(
                 pl.col("plant_type") == pl.lit("fruiting_vegetables"),
                 ~pl.col("o2_ppm").is_between(5, 8),
@@ -111,6 +125,9 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
             ec_dsm=pl.when(pl.col("ec_dsm") < 0)
             .then(pl.lit(None))
             .otherwise(pl.col("ec_dsm")),
+            humidity_percent=pl.when(~pl.col("humidity_percent").is_between(0, 100))
+            .then(pl.lit(None))
+            .otherwise(pl.col("humidity_percent")),
         )
         X = (
             X.with_columns(
@@ -120,7 +137,28 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
                 .alias("temperature_celsius")
             )
             if self.include_temperature
-            else X
+            else X.with_columns(
+                plant_type_stage=pl.when(
+                    ~pl.col("plant_type_stage").is_in(
+                        [
+                            "fruiting_vegetables_seedling",
+                            "fruiting_vegetables_vegetative",
+                            "fruiting_vegetables_maturity",
+                            "herbs_seedling",
+                            "herbs_vegetative",
+                            "herbs_maturity",
+                            "leafy_greens_seedling",
+                            "leafy_greens_vegetative",
+                            "leafy_greens",
+                            "vine_crops_seedling",
+                            "vine_crops_vegetative",
+                            "vine_crops_maturity",
+                        ]
+                    )
+                )
+                .then(pl.lit("None"))
+                .otherwise(pl.col("plant_type_stage")),
+            )
         ).to_pandas()
 
         return X
