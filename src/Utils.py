@@ -98,18 +98,18 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
         X = (
             pl.from_pandas(X)
             .with_columns(
-                plant_type=pl.when(
-                    ~pl.col("plant_type").is_in(
-                        ["fruiting_vegetables", "herbs", "leafy_greens", "vine_crops"]
-                    )
-                )
-                .then(pl.lit("None"))
-                .otherwise(pl.col("plant_type")),
-                plant_stage=pl.when(
-                    ~pl.col("plant_stage").is_in(["seedling", "vegetative", "maturity"])
-                )
-                .then(pl.lit("None"))
-                .otherwise(pl.col("plant_stage")),
+                # plant_type=pl.when(
+                #     ~pl.col("plant_type").is_in(
+                #         ["fruiting_vegetables", "herbs", "leafy_greens", "vine_crops"]
+                #     )
+                # )
+                # .then(pl.lit(""))
+                # .otherwise(pl.col("plant_type")),
+                # plant_stage=pl.when(
+                #     ~pl.col("plant_stage").is_in(["seedling", "vegetative", "maturity"])
+                # )
+                # .then(pl.lit(""))
+                # .otherwise(pl.col("plant_stage")),
                 o2_ppm=pl.when(
                     pl.col("plant_type") == pl.lit("fruiting_vegetables"),
                     ~pl.col("o2_ppm").is_between(5, 8),
@@ -144,8 +144,8 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
                 .otherwise("o2_ppm"),
             )
         )
-
         X = (
+            # For Classfication Task:
             X.with_columns(
                 pl.when(pl.col("temperature_celsius") < 0)
                 .then(pl.lit(None))
@@ -156,6 +156,7 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
                 .otherwise("nutrient_k_ppm"),
             )
             if self.is_classification_task
+            # For Regression Task:
             else X.with_columns(
                 plant_type_stage=pl.when(
                     ~pl.col("plant_type_stage").is_in(
@@ -173,15 +174,21 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
                             "vine_crops_vegetative",
                             "vine_crops_maturity",
                         ]
-                    ),
-                    nutrient_n_ppm=pl.when(pl.col("nutrient_n_ppm") < 0)
-                    .then(pl.lit(None))
-                    .otherwise("nutrient_n_ppm"),
+                    )
                 )
-                .then(pl.lit("None"))
+                .then(pl.lit(None))
                 .otherwise(pl.col("plant_type_stage")),
+                nutrient_n_ppm=pl.when(pl.col("nutrient_n_ppm") < 0)
+                .then(pl.lit(None))
+                .otherwise("nutrient_n_ppm"),
             )
         ).to_pandas()
+
+        # X = (
+        #     X.filter(pl.col("temperature_celsius").is_not_nan())
+        #     if not self.is_classification_task
+        #     else X.filter(pl.col("plant_type_stage") != "")
+        # ).to_pandas()
 
         return X
 

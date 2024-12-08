@@ -41,12 +41,10 @@ src/
   
 the p values for regression task compared to the target (temperature) are significant, nutrients p and k can be removed as discussed in the visualisation sections. but for classfication task since k is the only one significant of all the nutrients, p and n will be removed  
   
-- f) Describe how the features in the dataset are processed (summarised in a table).  
-all categorial features are set to lower case and space character replaced with underscores.  
-  
+- f)
 | feature         | Processes         |   
 | :----------- | :--------------- |  
-| temperature_celsius| used as target for Temperature.py pipeline|  
+| temperature_celsius| used as target for Temperature.py pipeline, removedd those that are Nan. for Plant_Type_Stage.py temperature below 0 is removed|  
 | plant_type_stage | created using plant_type and plant_stage. used as target for Plant_Type_Stage.py pipeline|  
 | plant_type | set to lower case and space character replaced with underscores. |  
 | humidity_percent    | Remove any outliers beyond  the range of 0 to 100   |   
