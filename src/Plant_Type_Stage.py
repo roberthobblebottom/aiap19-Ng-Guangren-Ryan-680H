@@ -45,7 +45,7 @@ class Plant_Type_Stage:
                         "co2_ppm",
                         "ec_dsm",
                         "o2_ppm",
-                        "nutrient_n_ppm",
+                        "nutrient_k_ppm",
                         "ph",
                         "water_level_mm",
                     ],
@@ -58,7 +58,7 @@ class Plant_Type_Stage:
                 "previous_cycle_plant_type",
                 "location",
                 "nutrient_p_ppm",
-                "nutrient_k_ppm",  # these two nutrients are removed as discussed in the eda.
+                "nutrient_n_ppm",  # these two nutrients are removed as discussed in the eda.
                 # "plant_type", # removed from here because it is still needed for outlier removal
             ]
         ]  # the non one hot encoded feature will be used instead.
