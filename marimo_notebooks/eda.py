@@ -288,7 +288,7 @@ def __(df_consistent, px):
         df_consistent.to_pandas().corr().round(2),
         text_auto=True,
         title="pearson correlation heatmap",
-    )
+    ).update_layout(height=500,width=500)
     return
 
 
@@ -298,7 +298,7 @@ def __(df_consistent, px):
         df_consistent.to_pandas().corr(method="spearman").round(2),
         text_auto=True,
         title="spearman correlation heatmap",
-    )
+    ).update_layout(height=500,width=500)
     return
 
 
