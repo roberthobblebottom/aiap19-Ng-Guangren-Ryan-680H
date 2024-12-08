@@ -29,13 +29,13 @@ src/
   4. train(): `train_test_split()`   
   5. train(): `RandomSearchCV()` with 5 fold cross validation    
 
-step 4 and 5 rationale: 3 way hold out with cross validation it is used because  
-unlike 2 way hold out, the test error less depended on samples use  
-and may overestimate test error   
-these split is used in such a way that data leakage isn't present.  
-Data Leakage will give a overestimated test error.  
+        step 4 and 5 rationale: 3 way hold out with cross validation it is used because  
+        unlike 2 way hold out, the test error less depended on samples use  
+        and may overestimate test error   
+        these split is used in such a way that data leakage isn't present.  
+        Data Leakage will give a overestimated test error.  
           
-6. `evaluate()`: the `pipeline.predict()` and `pipeline.predict_proba()` and respective metrics are calculated on respective model tasks   
+  6. `evaluate()`: the `pipeline.predict()` and `pipeline.predict_proba()` and respective metrics are calculated on respective model tasks   
   
 - e) the nutrients are staticially significantly  related to each other and these other features like `light_intensity_lux`, `humidity_percent` and `plant_stage_coded`. (alpha = 0.05)   
   
@@ -49,16 +49,16 @@ all categorial features are set to lower case and space character replaced with 
 | temperature_celsius| used as target for Temperature.py pipeline|  
 | plant_type_stage | created using plant_type and plant_stage. used as target for Plant_Type_Stage.py pipeline|  
 | plant_type | set to lower case and space character replaced with underscores. |  
-| humidity_percent    | Even more text   |   
-| light_intensity_lux | Even more text   | 
-| co2_ppm    | Even more text   | 
-| ec_dsm    | Even more text   | 
-| o2_ppm    | Even more text   | 
-| nutrient_n_ppm    | removed " ppm" substring from the strings if such substring exist. casted to float   | 
-| ph    | Even more text   | 
-| water_level_mm    | Even more text   | 
-| nutrient_k_ppm    |  removed " ppm" substring from the strings if such substring exist. casted to float   | 
-| nutrient_p_ppm    | removed " ppm" substring from the strings if such substring exist. casted to float  | 
+| humidity_percent    | Remove any outliers beyond  the range of 0 to 100   |   
+| light_intensity_lux | removed any negatives   | 
+| co2_ppm    | removed any negatives | 
+| ec_dsm    | removed any negatives   | 
+| o2_ppm    | set o2 for frutiing vegetables and herbs into certain range to remove outliers as mentioned in the eda. removed any negatives  | 
+| nutrient_n_ppm    | removed " ppm" substring from the strings if such substring exist. casted to float. removed any negatives   | 
+| ph    |maded sure values are within range of 0 and 14. casted to integer| 
+| water_level_mm    |    | 
+| nutrient_k_ppm    |  removed " ppm" substring from the strings if such substring exist. casted to float.removed any negatives   | 
+| nutrient_p_ppm    | removed " ppm" substring from the strings if such substring exist. casted to float. removed any negatives  | 
 | plant_stage_coded    | removed from both pipelines   | 
 | previous_cycle_plant_type    | removed from both pipelines   | 
 | location    | removed from both pipelines   | 

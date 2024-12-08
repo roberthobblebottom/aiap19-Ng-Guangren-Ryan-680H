@@ -76,7 +76,7 @@ class Plant_Type_Stage:
                         nonImportantFeatures,
                     ),
                 ),
-                ("outliersRemover", Utils.OutliersRemover(include_temperature=True)),
+                ("outliersRemover", Utils.OutliersRemover(is_classification_task=True)),
                 (
                     "columnTransformerForOneHotEncoding",
                     column_transformer,

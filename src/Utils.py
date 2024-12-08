@@ -74,14 +74,13 @@ def column_rename_and_ensuring_consistency_values(df: pl.DataFrame):
 class OutliersRemover(ClassifierMixin, BaseEstimator):
     """Removes outliers as explored in eda.ipynb"""
 
-    def __init__(self, include_temperature=False):
+    def __init__(self, is_classification_task=False):
         """
 
         Args:
-            include_temperature (bool, optional): If outilier should includes temperature,
-                                                  for plant_type_stage classifier Defaults to False.
+            is_classification_task (bool, optional): if it is the classification task, or else it is a regression task. Defaults to False.
         """
-        self.include_temperature = include_temperature
+        self.is_classification_task = is_classification_task
 
     def fit(self, X, y):
         return self
@@ -95,48 +94,68 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
         Returns:
             pl.DataFrame: features DataFrame with outliers removed
         """
-        X = pl.from_pandas(X).with_columns(
-            plant_type=pl.when(
-                ~pl.col("plant_type").is_in(
-                    ["fruiting_vegetables", "herbs", "leafy_greens", "vine_crops"]
+        # print(X.columns)e
+        X = (
+            pl.from_pandas(X)
+            .with_columns(
+                plant_type=pl.when(
+                    ~pl.col("plant_type").is_in(
+                        ["fruiting_vegetables", "herbs", "leafy_greens", "vine_crops"]
+                    )
                 )
+                .then(pl.lit("None"))
+                .otherwise(pl.col("plant_type")),
+                plant_stage=pl.when(
+                    ~pl.col("plant_stage").is_in(["seedling", "vegetative", "maturity"])
+                )
+                .then(pl.lit("None"))
+                .otherwise(pl.col("plant_stage")),
+                o2_ppm=pl.when(
+                    pl.col("plant_type") == pl.lit("fruiting_vegetables"),
+                    ~pl.col("o2_ppm").is_between(5, 8),
+                )
+                .then(pl.lit(None))
+                .when(
+                    pl.col("plant_type") == pl.lit("herbs"),
+                    ~pl.col("o2_ppm").is_between(5, 8),
+                )
+                .then(pl.lit(None))
+                .otherwise(pl.col("o2_ppm")),
+                light_intensity_lux=pl.when(pl.col("light_intensity_lux") < 0)
+                .then(pl.lit(None))
+                .otherwise(pl.col("light_intensity_lux")),
+                ec_dsm=pl.when(pl.col("ec_dsm") < 0)
+                .then(pl.lit(None))
+                .otherwise(pl.col("ec_dsm")),
+                humidity_percent=pl.when(~pl.col("humidity_percent").is_between(0, 100))
+                .then(pl.lit(None))
+                .otherwise(pl.col("humidity_percent")),
+                co2_ppm=pl.when(pl.col("co2_ppm") < 0)
+                .then(pl.lit(None))
+                .otherwise("co2_ppm"),
+                ph=pl.when(~pl.col("ph").is_between(0, 14))
+                .then(pl.lit(None))
+                .otherwise(pl.col("ph"))
+                .cast(pl.Int16),
             )
-            .then(pl.lit("None"))
-            .otherwise(pl.col("plant_type")),
-            plant_stage=pl.when(
-                ~pl.col("plant_stage").is_in(["seedling", "vegetative", "maturity"])
+            .with_columns(
+                o2_ppm=pl.when(pl.col("o2_ppm") < 0)
+                .then(pl.lit(None))
+                .otherwise("o2_ppm"),
             )
-            .then(pl.lit("None"))
-            .otherwise(pl.col("plant_stage")),
-            o2_ppm=pl.when(
-                pl.col("plant_type") == pl.lit("fruiting_vegetables"),
-                ~pl.col("o2_ppm").is_between(5, 8),
-            )
-            .then(pl.lit(None))
-            .when(
-                pl.col("plant_type") == pl.lit("herbs"),
-                ~pl.col("o2_ppm").is_between(5, 8),
-            )
-            .then(pl.lit(None))
-            .otherwise(pl.col("o2_ppm")),
-            light_intensity_lux=pl.when(pl.col("light_intensity_lux") < 0)
-            .then(pl.lit(None))
-            .otherwise(pl.col("light_intensity_lux")),
-            ec_dsm=pl.when(pl.col("ec_dsm") < 0)
-            .then(pl.lit(None))
-            .otherwise(pl.col("ec_dsm")),
-            humidity_percent=pl.when(~pl.col("humidity_percent").is_between(0, 100))
-            .then(pl.lit(None))
-            .otherwise(pl.col("humidity_percent")),
         )
+
         X = (
             X.with_columns(
                 pl.when(pl.col("temperature_celsius") < 0)
                 .then(pl.lit(None))
                 .otherwise(pl.col("temperature_celsius"))
-                .alias("temperature_celsius")
+                .alias("temperature_celsius"),
+                nutrient_k_ppm=pl.when(pl.col("nutrient_k_ppm") < 0)
+                .then(pl.lit(None))
+                .otherwise("nutrient_k_ppm"),
             )
-            if self.include_temperature
+            if self.is_classification_task
             else X.with_columns(
                 plant_type_stage=pl.when(
                     ~pl.col("plant_type_stage").is_in(
@@ -154,7 +173,10 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
                             "vine_crops_vegetative",
                             "vine_crops_maturity",
                         ]
-                    )
+                    ),
+                    nutrient_n_ppm=pl.when(pl.col("nutrient_n_ppm") < 0)
+                    .then(pl.lit(None))
+                    .otherwise("nutrient_n_ppm"),
                 )
                 .then(pl.lit("None"))
                 .otherwise(pl.col("plant_type_stage")),
