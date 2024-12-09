@@ -78,13 +78,16 @@ but the downside probably less accurate than gradientboosting models
 - h) Rational for metrics used:  
   - `temperature_celsius` Regression Task:    
     - Mean Absolute Error: Rombust to outliers,Interpretability  
-    -Root Mean Squared Error: More interpretable than mean squared error, Less sensitive to large errors  
+    -Root Mean Squared Error: More interpretable than mean squared error, Less sensitive to large errors. The RMSE tells us how well a regression model can predict the value of the response variable in absolute terms while R2 tells us how well a model can predict the value of the response variable in percentage terms.
+    - R2 score: scale indepedent
+    ease of interpretability
   
   - `plant_type_stage` Classification Task:  
     - Accuracy: Useful for looking at all classes.  
     - F1: Balances between precision and recall; the harmonic mean between the two.  
             Useful if the aim is to look at the positives classes only  
     - AUC-ROC: provides insights into the performance of the model  
+    - a balance look between type 1 and type 2 errors would be a good idea for plant_type_stage so accuracy will be the priority metrics to look at.
   
 - i) EDA is initially done on marimo notebook and exported to ipynb format. You may also look at the marimo notebook output via opening marimo_notebooks/eda.html 
 
