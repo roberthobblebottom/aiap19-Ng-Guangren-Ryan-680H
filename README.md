@@ -22,8 +22,8 @@ src/
   2. rename columns and make feature values consistent  
   3. init pipeline  
     1. `NonImportantFeaturesRemover()` As discussed in EDA, removing the non important features  
-    2. `outliersRemover()` - Remkoves outliers
-    3. `ColumnsTransformerForOneHotEncoding()`  
+    2. `outliersRemover()` - Removes outliers
+    3. `ColumnsTransformerForOneHotEncoding()`  one hot encoding on selected String features
     4. `SimpleImputer()` Median Strategy 
     5. Either `RandomForestClassifier` or `RandomForestRegressor` for `Plant_Type_Stage` and `Temperature` respectively  
   4. train(): `train_test_split()`   
@@ -46,7 +46,8 @@ the p values for regression task compared to the target (temperature) are signif
 | :----------- | :--------------- |  
 | temperature_celsius| used as target for Temperature.py pipeline, removedd those that are Nan. for Plant_Type_Stage.py temperature below 0 is removed|  
 | plant_type_stage | created using plant_type and plant_stage. used as target for Plant_Type_Stage.py pipeline|  
-| plant_type | set to lower case and space character replaced with underscores. |  
+| plant_type | set to lower case and space character replaced with underscores. one hot encoded for regression task|  
+|plant_stage||
 | humidity_percent    | Remove any outliers beyond  the range of 0 to 100   |   
 | light_intensity_lux | removed any negatives   | 
 | co2_ppm    | removed any negatives | 

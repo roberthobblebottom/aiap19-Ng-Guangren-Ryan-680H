@@ -21,36 +21,36 @@ class Plant_Type_Stage:
         # Some guards to prevent incorrect inputs or formats from being trained and tested
         if df.shape[0] == 0:
             raise Exception("There are no rows in the input Polars DataFrame.")
-        self.x = df.select(pl.exclude("plant_type_stage")).to_pandas()
+        self.x = df.select(pl.exclude("plant_type_stage", "plant_stage")).to_pandas()
         self.y = df.select("plant_type_stage").to_pandas()
 
-        column_transformer = ColumnTransformer(
-            [
-                (
-                    "oneHotEncoder",
-                    OneHotEncoder(),
-                    [
-                        "plant_type",
-                        "plant_stage",
-                    ],
-                ),
-                (
-                    "passthrough",
-                    "passthrough",
-                    [
-                        "temperature_celsius",
-                        "humidity_percent",
-                        "light_intensity_lux",
-                        "co2_ppm",
-                        "ec_dsm",
-                        "o2_ppm",
-                        "nutrient_k_ppm",
-                        "ph",
-                        "water_level_mm",
-                    ],
-                ),
-            ]
-        )
+        # column_transformer = ColumnTransformer(
+        #     [
+        #         (
+        #             "oneHotEncoder",
+        #             OneHotEncoder(),
+        #             [
+        #                 "plant_type",
+        #                 "plant_stage",
+        #             ],
+        #         ),
+        #         (
+        #             "passthrough",
+        #             "passthrough",
+        #             [
+        #                 "temperature_celsius",
+        #                 "humidity_percent",
+        #                 "light_intensity_lux",
+        #                 "co2_ppm",
+        #                 "ec_dsm",
+        #                 "o2_ppm",
+        #                 "nutrient_k_ppm",
+        #                 "ph",
+        #                 "water_level_mm",
+        #             ],
+        #         ),
+        #     ]
+        # )
         nonImportantFeatures = [
             [
                 "plant_stage_coded",
@@ -76,10 +76,10 @@ class Plant_Type_Stage:
                     ),
                 ),
                 ("outliersRemover", Utils.OutliersRemover(is_classification_task=True)),
-                (
-                    "columnTransformerForOneHotEncoding",
-                    column_transformer,
-                ),
+                # (
+                #     "columnTransformerForOneHotEncoding",
+                #     column_transformer,
+                # ),
                 # (
                 #     "simpleImputer",
                 #     SimpleImputer(strategy="median"),

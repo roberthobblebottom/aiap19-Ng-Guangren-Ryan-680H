@@ -154,7 +154,7 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
                 nutrient_k_ppm=pl.when(pl.col("nutrient_k_ppm") < 0)
                 .then(pl.lit(None))
                 .otherwise("nutrient_k_ppm"),
-            )
+            ).select(pl.exclude("plant_type"))
             if self.is_classification_task
             # For Regression Task:
             else X.with_columns(
