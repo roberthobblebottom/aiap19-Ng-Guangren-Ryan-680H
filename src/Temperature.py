@@ -29,8 +29,26 @@ class Temperature:
             raise Exception(
                 "There are no rows with temperature column that are not NaN values."
             )
-
-        self.x = df.select(pl.exclude("temperature_celsius")).to_pandas()
+        nonImportantFeatures = [
+            "nutrient_p_ppm",
+            "nutrient_k_ppm",  # these two nutrients are removed as discussed in the eda.
+            "plant_stage_coded",
+            "previous_cycle_plant_type",
+            "location",
+            "plant_type",
+            # "plant_stage",
+            # "plant_type_stage",
+        ]
+        # Excluding non important features as mentioned in the eda out of the sklearn pipeline seems to work better
+        self.x = (
+            df.select(
+                pl.exclude(
+                    "temperature_celsius",
+                )
+            )
+            .select(pl.exclude(nonImportantFeatures))
+            .to_pandas()
+        )
         self.y = df.select("temperature_celsius").to_pandas()
 
         column_transformer = ColumnTransformer(
@@ -39,7 +57,9 @@ class Temperature:
                     "oneHotEncoder",
                     OneHotEncoder(),
                     [
-                        "plant_type",
+                        # "plant_type",
+                        "plant_stage",
+                        "plant_type_stage",
                     ],
                 ),
                 (
@@ -58,24 +78,15 @@ class Temperature:
                 ),
             ]
         )
-        nonImportantFeatures = [
-            [
-                "nutrient_p_ppm",
-                "nutrient_k_ppm",  # these two nutrients are removed as discussed in the eda.
-                "plant_stage_coded",
-                "previous_cycle_plant_type",
-                "location",
-                # "plant_type", # removed from here because it is still needed
-            ]
-        ]
+
         self.pipeline = Pipeline(
             [
-                (
-                    "nonImportantFeaturesRemover",
-                    Utils.NonImportantFeaturesRemover(
-                        nonImportantFeatures,
-                    ),
-                ),
+                # (
+                #     "nonImportantFeaturesRemover",
+                #     Utils.NonImportantFeaturesRemover(
+                #         nonImportantFeatures,
+                #     ),
+                # ),
                 ("outliersRemover", Utils.OutliersRemover()),
                 ("columnTransformerForOneHotEncoding", column_transformer),
                 (
@@ -125,10 +136,11 @@ class Temperature:
         rs = RandomizedSearchCV(
             self.pipeline,
             param_distributions=param_dist,
-            n_iter=5,  # TODO change to a bigger number
+            n_iter=10,  # TODO change to a bigger number
             cv=5,
             scoring="neg_mean_absolute_error",
-            n_jobs=10,
+            n_jobs=20,
+            error_score="raise",
         )
         rs.fit(x_train, y_train.iloc[:, 0].ravel())
         best_params = rs.best_params_
@@ -162,9 +174,11 @@ class Temperature:
         """
         print("evaluations")
         predictions = self.pipeline.predict(self.x_test)
-        r2 = r2_score(self.y_test, predictions)
-        mae = mean_absolute_error(self.y_test, predictions)
-        rmse = root_mean_squared_error(self.y_test, predictions)
+        r2 = r2_score(self.y_test, predictions, multioutput="raw_values")
+        mae = mean_absolute_error(self.y_test, predictions, multioutput="raw_values")
+        rmse = root_mean_squared_error(
+            self.y_test, predictions, multioutput="raw_values"
+        )
         print("r square score", r2)
         print("mean absolute error", mae)
         print("root mean squared error", rmse)

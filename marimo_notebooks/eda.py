@@ -288,7 +288,7 @@ def __(df_consistent, px):
         df_consistent.to_pandas().corr().round(2),
         text_auto=True,
         title="pearson correlation heatmap",
-    ).update_layout(height=500,width=500)
+    ).update_layout(height=500, width=500)
     return
 
 
@@ -298,7 +298,7 @@ def __(df_consistent, px):
         df_consistent.to_pandas().corr(method="spearman").round(2),
         text_auto=True,
         title="spearman correlation heatmap",
-    ).update_layout(height=500,width=500)
+    ).update_layout(height=500, width=500)
     return
 
 
@@ -364,7 +364,7 @@ def __(df_consistent, px):
         dragmode=False,  # Disable dragging
         hovermode=False,  # Disable hover info
     )
-        # .write_image("images/scatterplot_n_lux.png")
+    # .write_image("images/scatterplot_n_lux.png")
     # mo.image("images/scatterplot_n_lux.png")
     return
 
@@ -420,7 +420,7 @@ def __(df_consistent, px):
         dragmode=False,  # Disable dragging
         hovermode=False,  # Disable hover info
     )
-        # .write_image("images/scatterplot_k_p.png")
+    # .write_image("images/scatterplot_k_p.png")
     # mo.image("images/scatterplot_k_p.png")
     return
 
@@ -783,7 +783,7 @@ def __(RandomForestRegressor, df_consistent, e, pl):
 @app.cell
 def __(feature_importance_regression):
     print(
-        "More important features for classification: \n",
+        "More important features for regression: \n",
         feature_importance_regression.sort("importance", descending=True)[
             :15, "name"
         ].to_list(),
@@ -805,7 +805,7 @@ def __(mo):
 @app.cell
 def __(feature_importance_regression):
     print(
-        "Less important features for classification: \n",
+        "Less important features for regression: \n",
         feature_importance_regression.sort("importance", descending=True)[
             15:, "name"
         ].to_list(),

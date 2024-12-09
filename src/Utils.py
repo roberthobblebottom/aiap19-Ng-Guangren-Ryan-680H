@@ -88,6 +88,8 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
     def transform(self, X):
         """The main function that removes the outliers by changing them into NaN values.
 
+        some ideas of outliers remover for categorial are removed as there were problems in my pipeline
+        in the first place.
         Args:
             X (pl.DataFrame): features
 
@@ -110,17 +112,17 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
                 # )
                 # .then(pl.lit(""))
                 # .otherwise(pl.col("plant_stage")),
-                o2_ppm=pl.when(
-                    pl.col("plant_type") == pl.lit("fruiting_vegetables"),
-                    ~pl.col("o2_ppm").is_between(5, 8),
-                )
-                .then(pl.lit(None))
-                .when(
-                    pl.col("plant_type") == pl.lit("herbs"),
-                    ~pl.col("o2_ppm").is_between(5, 8),
-                )
-                .then(pl.lit(None))
-                .otherwise(pl.col("o2_ppm")),
+                # o2_ppm=pl.when(
+                #     pl.col("plant_type") == pl.lit("fruiting_vegetables"),
+                #     ~pl.col("o2_ppm").is_between(5, 8),
+                # )
+                # .then(pl.lit(None))
+                # .when(
+                #     pl.col("plant_type") == pl.lit("herbs"),
+                #     ~pl.col("o2_ppm").is_between(5, 8),
+                # )
+                # .then(pl.lit(None))
+                # .otherwise(pl.col("o2_ppm")),
                 light_intensity_lux=pl.when(pl.col("light_intensity_lux") < 0)
                 .then(pl.lit(None))
                 .otherwise(pl.col("light_intensity_lux")),
@@ -154,59 +156,53 @@ class OutliersRemover(ClassifierMixin, BaseEstimator):
                 nutrient_k_ppm=pl.when(pl.col("nutrient_k_ppm") < 0)
                 .then(pl.lit(None))
                 .otherwise("nutrient_k_ppm"),
-            ).select(pl.exclude("plant_type"))
+            )
             if self.is_classification_task
             # For Regression Task:
             else X.with_columns(
-                plant_type_stage=pl.when(
-                    ~pl.col("plant_type_stage").is_in(
-                        [
-                            "fruiting_vegetables_seedling",
-                            "fruiting_vegetables_vegetative",
-                            "fruiting_vegetables_maturity",
-                            "herbs_seedling",
-                            "herbs_vegetative",
-                            "herbs_maturity",
-                            "leafy_greens_seedling",
-                            "leafy_greens_vegetative",
-                            "leafy_greens",
-                            "vine_crops_seedling",
-                            "vine_crops_vegetative",
-                            "vine_crops_maturity",
-                        ]
-                    )
-                )
-                .then(pl.lit(None))
-                .otherwise(pl.col("plant_type_stage")),
+                # plant_type_stage=pl.when(
+                #     ~pl.col("plant_type_stage").is_in(
+                #         [
+                #             "fruiting_vegetables_seedling",
+                #             "fruiting_vegetables_vegetative",
+                #             "fruiting_vegetables_maturity",
+                #             "herbs_seedling",
+                #             "herbs_vegetative",
+                #             "herbs_maturity",
+                #             "leafy_greens_seedling",
+                #             "leafy_greens_vegetative",
+                #             "leafy_greens",
+                #             "vine_crops_seedling",
+                #             "vine_crops_vegetative",
+                #             "vine_crops_maturity",
+                #         ]
+                #     )
+                # )
+                # .then(pl.lit(None))
+                # .otherwise(pl.col("plant_type_stage")),
                 nutrient_n_ppm=pl.when(pl.col("nutrient_n_ppm") < 0)
                 .then(pl.lit(None))
                 .otherwise("nutrient_n_ppm"),
             )
-        ).to_pandas()
+        )
 
-        # X = (
-        #     X.filter(pl.col("temperature_celsius").is_not_nan())
-        #     if not self.is_classification_task
-        #     else X.filter(pl.col("plant_type_stage") != "")
-        # ).to_pandas()
-
-        return X
+        return X.to_pandas()
 
 
-class NonImportantFeaturesRemover(ClassifierMixin, BaseEstimator):
-    """Removes non important feaetures as mentioned in th eda"""
+# class NonImportantFeaturesRemover(ClassifierMixin, BaseEstimator):
+#     """Removes non important feaetures as mentioned in th eda"""
 
-    def __init__(
-        self,
-        features_to_remove: list[str],
-    ):
-        self.features_to_remove = features_to_remove
+#     def __init__(
+#         self,
+#         features_to_remove: list[str],
+#     ):
+#         self.features_to_remove = features_to_remove
 
-    def fit(self, x, y):
-        return self
+#     def fit(self, x, y):
+#         return self
 
-    def transform(self, x):
-        """main function in  removing non important features"""
-        x = pl.from_pandas(x)
-        x = x.select(pl.exclude(*self.features_to_remove)).to_pandas()
-        return x
+#     def transform(self, x):
+#         """main function in  removing non important features"""
+#         x = pl.from_pandas(x)
+#         x = x.select(pl.exclude(*self.features_to_remove)).to_pandas()
+#         return x

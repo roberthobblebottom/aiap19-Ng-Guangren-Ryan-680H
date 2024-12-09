@@ -10,18 +10,30 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 import Utils
 from scipy.stats import randint
-import pandas as pd
 
 
 class Plant_Type_Stage:
     def __init__(self, df: pl.DataFrame) -> None:
         print("Plant_type_stage.py init")
         df = Utils.column_rename_and_ensuring_consistency_values(df)
-
+        nonImportantFeatures = [
+            "plant_stage_coded",
+            "previous_cycle_plant_type",
+            "location",
+            "nutrient_p_ppm",
+            "nutrient_n_ppm",  # these two nutrients are removed as discussed in the eda.
+            "plant_type",
+        ]
         # Some guards to prevent incorrect inputs or formats from being trained and tested
         if df.shape[0] == 0:
             raise Exception("There are no rows in the input Polars DataFrame.")
-        self.x = df.select(pl.exclude("plant_type_stage", "plant_stage")).to_pandas()
+
+        # Excluding non important features as mentioned in the eda out of the sklearn pipeline seems to work better
+        self.x = (
+            df.select(pl.exclude("plant_type_stage", "plant_stage"))
+            .select(pl.exclude(nonImportantFeatures))
+            .to_pandas()
+        )
         self.y = df.select("plant_type_stage").to_pandas()
 
         # column_transformer = ColumnTransformer(
@@ -51,17 +63,7 @@ class Plant_Type_Stage:
         #         ),
         #     ]
         # )
-        nonImportantFeatures = [
-            [
-                "plant_stage_coded",
-                "previous_cycle_plant_type",
-                "location",
-                "nutrient_p_ppm",
-                "nutrient_n_ppm",  # these two nutrients are removed as discussed in the eda.
-                # "plant_type", # removed from here because it is still needed for outlier removal
-            ]
-        ]  # the non one hot encoded feature will be used instead.
-        # Same list as the Temperature regression pipeline
+
         """
          ['previous_cycle_plant_type_vine crops', 'previous_cycle_plant_type_fruiting vegetables', 'previous_cycle_plant_type_herbs', 
          'previous_cycle_plant_type_leafy greens', 'location_zone_e', 'location_zone_c',
@@ -69,12 +71,12 @@ class Plant_Type_Stage:
         """
         self.pipeline = Pipeline(
             [
-                (
-                    "nonImportantFeaturesRemover",
-                    Utils.NonImportantFeaturesRemover(
-                        nonImportantFeatures,
-                    ),
-                ),
+                # (
+                #     "nonImportantFeaturesRemover",
+                #     Utils.NonImportantFeaturesRemover(
+                #         nonImportantFeatures,
+                #     ),
+                # ),
                 ("outliersRemover", Utils.OutliersRemover(is_classification_task=True)),
                 # (
                 #     "columnTransformerForOneHotEncoding",
