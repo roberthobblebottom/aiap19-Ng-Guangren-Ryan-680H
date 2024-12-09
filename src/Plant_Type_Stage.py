@@ -129,10 +129,10 @@ class Plant_Type_Stage:
         rs = RandomizedSearchCV(
             self.pipeline,
             param_distributions=param_dist,
-            n_iter=5,  # TODO change to a bigger number
+            n_iter=20,  # TODO change to a bigger number
             cv=5,
             scoring="accuracy",
-            n_jobs=10,
+            n_jobs=20,
         )
         rs.fit(x_train, y_train.iloc[:, 0].ravel())
         best_params = rs.best_params_

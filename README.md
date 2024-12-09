@@ -88,4 +88,5 @@ but the downside probably less accurate than gradientboosting models
   
 - i) EDA is initially done on marimo notebook and exported to ipynb format. You may also look at the marimo notebook output via opening marimo_notebooks/eda.html 
 
-unable to make the pipeline more syncronised as mentioned in my aiap16 assessment feedback. unable to improve temperature metrics.
+unable to make the pipeline more syncronised as mentioned in my aiap16 assessment feedback. unable to improve temperature metrics.  
+  

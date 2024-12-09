@@ -136,9 +136,10 @@ class Temperature:
         rs = RandomizedSearchCV(
             self.pipeline,
             param_distributions=param_dist,
-            n_iter=10,  # TODO change to a bigger number
+            n_iter=20,  # TODO change to a bigger number
             cv=5,
-            scoring="neg_mean_absolute_error",
+            scoring="r2",
+            # scoring="neg_mean_absolute_error",
             n_jobs=20,
             error_score="raise",
         )
