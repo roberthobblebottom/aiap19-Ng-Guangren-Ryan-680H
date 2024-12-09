@@ -17,13 +17,13 @@ src/
 `pip install -r requirements.txt`  
 `bash run.sh` # to run both `Temperature` and `Plant_Type_Stage` pipelines  `\
   
-- d) For both `plant_type_stage` Classification and `plant_type_stage` Regression Tasks:  
+- d) For both `plant_type_stage` Classification and `temperature_celsius` Regression Tasks:  
   1. connection to database  
   2. rename columns and make feature values consistent  
   3. remove non important features as discussed in eda.
   4. init pipeline  
     1. `outliersRemover()` - Removes outliers
-    2. `ColumnsTransformerForOneHotEncoding()`  one hot encoding on selected String features. for `plant_type_stage` Regression Task only
+    2. `ColumnsTransformerForOneHotEncoding()`  one hot encoding on selected String features. for `temperature_celsius` Regression Task only
     3. `SimpleImputer()` Median Strategy 
     4. Either `RandomForestClassifier` or `RandomForestRegressor` for `Plant_Type_Stage` and `Temperature` respectively  
   5. train(): `train_test_split()`   
@@ -39,15 +39,15 @@ src/
   
 - e) the nutrients are staticially significantly  related to each other and these other features like `light_intensity_lux`, `humidity_percent` and `plant_stage_coded`. (alpha = 0.05)   
   
-the p values for `plant_type_stage` regression task compared to the target (temperature) are significant, nutrients p and k can be removed as discussed in the visualisation sections. but for classfication task since k is the only one significant of all the nutrients, p and n will be removed  
+the p values for `temperature_celsius` regression task compared to the target (temperature) are significant, nutrients p and k can be removed as discussed in the visualisation sections. but for classfication task since k is the only one significant of all the nutrients, p and n will be removed  
   
 - f)
 | feature         | Processes         |   
 | :----------- | :--------------- |  
-| temperature_celsius| used as target for Temperature.py pipeline, removedd those that are Nan. for Plant_Type_Stage.py temperature below 0 is removed|  
-| plant_type_stage | created using plant_type and plant_stage. used as target for Plant_Type_Stage.py pipeline. one hot encoded for `plant_type_stage` regression task|  
+| temperature_celsius| used as target for Temperature.py pipeline, removedd those that are Nan. for Plant_Type_Stage regression pipeline, temperature below 0 is removed|  
+| plant_type_stage | created using plant_type and plant_stage. used as target for Plant_Type_Stage.py pipeline. one hot encoded for `temperature_celsius` regression task|  
 | plant_type | removed in `plant_type_stage` classification task to prevent data leakage.set to lower case and space character replaced with underscores. |  
-|plant_stage|removed in `plant_type_stage` classification task to prevent data leakage. one hot encoded in the `plant_type_stage` regression task|
+|plant_stage|removed in `plant_type_stage` classification task to prevent data leakage. one hot encoded in the `temperature_celsius` regression task|
 | humidity_percent    | Remove any outliers beyond  the range of 0 to 100   |   
 | light_intensity_lux | removed any negatives   | 
 | co2_ppm    | removed any negatives | 
@@ -76,11 +76,11 @@ less likely to overfit than gradientboosting models and some linear regression m
 but the downside probably less accurate than gradientboosting models  
   
 - h) Rational for metrics used:  
-  - `plant_type_stage` Regression Task:    
+  - `temperature_celsius` Regression Task:    
     - Mean Absolute Error: Rombust to outliers,Interpretability  
     -Root Mean Squared Error: More interpretable than mean squared error, Less sensitive to large errors  
   
-  - `temperature_celsius` Classification Task:  
+  - `plant_type_stage` Classification Task:  
     - Accuracy: Useful for looking at all classes.  
     - F1: Balances between precision and recall; the harmonic mean between the two.  
             Useful if the aim is to look at the positives classes only  
