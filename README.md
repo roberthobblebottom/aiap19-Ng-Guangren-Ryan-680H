@@ -42,6 +42,8 @@ src/
 the p values for `temperature_celsius` regression task compared to the target (temperature) are significant, nutrients p and k can be removed as discussed in the visualisation sections. but for classfication task since k is the only one significant of all the nutrients, p and n will be removed  
   
 - f)
+
+  
 | feature         | Processes         |   
 | :----------- | :--------------- |  
 | temperature_celsius| used as target for Temperature.py pipeline, removedd those that are Nan. for Plant_Type_Stage regression pipeline, temperature below 0 is removed|  
